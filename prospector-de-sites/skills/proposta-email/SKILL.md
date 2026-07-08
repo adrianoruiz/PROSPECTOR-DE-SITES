@@ -33,4 +33,4 @@ Objetivo: fazer o cliente ABRIR o link da página nova. Se ele abrir e a página
 
 ## Depois do envio
 
-Registrar em `leads.md` (status + data). Sugerir follow-up educado após 3-4 dias úteis sem resposta (1 único follow-up: "conseguiu ver a página?").
+Registrar em `leads.md` (status `proposta enviada` + data). Acompanhar as respostas na caixa de entrada — o fechamento acontece na conversa. Follow-up educado após 3-4 dias úteis sem resposta (1 único follow-up: "conseguiu ver a página?").
