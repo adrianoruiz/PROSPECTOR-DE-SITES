@@ -5,7 +5,8 @@
   },
   "metadata": {
     "description": "Plugins de IA para negócios do Helio Arreche",
-    "version": "2.0.0"
+    "version": "2.1.0",
+    "autoUpdate": true
   },
   "plugins": [
     {
@@ -15,7 +16,16 @@
       "author": {
         "name": "Helio Arreche"
       },
-      "keywords": ["prospeccao", "landing-page", "redesign", "hostgator", "google-maps", "gmail", "crm", "dashboard"]
+      "keywords": [
+        "prospeccao",
+        "landing-page",
+        "redesign",
+        "hostgator",
+        "google-maps",
+        "gmail",
+        "crm",
+        "dashboard"
+      ]
     }
   ]
 }
