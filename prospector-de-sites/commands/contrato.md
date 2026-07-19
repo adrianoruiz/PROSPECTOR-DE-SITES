@@ -7,7 +7,7 @@ Gere o contrato de um cliente fechado seguindo a skill `contrato-servico`.
 
 ## Passos
 
-1. Identifique o cliente por `$ARGUMENTS` ou liste os leads com status `fechado`/`respondeu` do banco e pergunte qual.
+1. Identifique o cliente por `$ARGUMENTS` ou liste os leads com status `fechado`/`respondeu` do banco e pergunte qual. O `[slug]` dos arquivos do contrato é LIDO do banco — nunca recalculado do nome (regra na skill `dashboard-leads`, seção "Como gerar o slug").
 2. Reúna os dados que o plugin JÁ tem: nome do cliente, cidade, valor fechado (banco), URL da página publicada, escopo (página única redesenhada + publicação), dados do prestador (assinatura do `prospector-config.json`).
 3. Antes de perguntar, LEIA as fontes: dados do prestador em `prospector-config.json` → campo `contratante` (o usuário preenche na vista Configurações do dashboard ou no /setup); dados do cliente nas colunas `docCliente`/`endCliente` do banco. Pergunte APENAS o que ainda faltar — e se o usuário colar a mensagem do cliente com CPF/endereço, extraia e salve no banco (`docCliente`, `endCliente`) para não perguntar de novo. Também confirme: forma de pagamento, prazo de entrega e manutenção mensal (valor).
 4. Gere as DUAS versões do contrato:

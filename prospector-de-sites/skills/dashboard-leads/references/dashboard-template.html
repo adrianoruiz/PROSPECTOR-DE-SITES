@@ -118,6 +118,15 @@ select.mini{border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-
 .doc-bar .fech{background:#3A3835;color:#EDEAE3}
 #doc-frame{flex:1;border:0;width:100%;background:#E9E7E1}
 .vazio{color:var(--muted);font-size:12.5px;text-align:center;padding:14px 4px}
+.diag{background:var(--warn-soft);border:1px solid #E8D3AC;border-radius:12px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#8A6218}
+.diag summary{cursor:pointer;font-weight:700;list-style:none}
+.diag summary::-webkit-details-marker{display:none}
+.diag summary::before{content:'▸ ';font-size:11px}
+.diag[open] summary::before{content:'▾ '}
+.diag ul{margin:10px 0 0;padding-left:18px}
+.diag li{margin-bottom:8px;line-height:1.5}
+.diag li b{font-family:var(--sans);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--warn)}
+.diag li i{display:block;font-style:normal;color:#6E6A63;font-size:12px;margin-top:2px}
 .card[draggable=true]{cursor:grab}
 .card.arrastando{opacity:.45;transform:rotate(1.5deg)}
 .col.alvo{outline:2px dashed var(--accent);outline-offset:-4px;background:var(--accent-soft)}
@@ -148,6 +157,23 @@ select.mini{border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-
 .cmp-col .cab.antes{color:var(--muted)} .cmp-col .cab.depois{color:var(--accent)}
 .cmp-col iframe{flex:1 1 auto;width:100%;border:0;min-height:0;background:#fff}
 @media(max-width:900px){.cmp-grid{grid-template-columns:1fr}}
+.cob-wrap{overflow:auto}
+.cob-matriz{border-collapse:separate;border-spacing:4px;font-size:12.5px;width:auto}
+.cob-matriz th{border:0;padding:6px 8px;cursor:default}
+.cob-matriz th.cid{text-align:right;text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--ink);font-weight:700;white-space:nowrap}
+.cob-matriz th.cid span{display:block;color:var(--muted);font-size:10.5px;font-weight:600}
+.cob-matriz td{border:0;padding:0}
+.cel{display:block;min-width:74px;padding:9px 8px;border-radius:9px;text-align:center;font-size:11.5px;font-weight:700;border:1px solid var(--line)}
+.cel.on{background:var(--ok-soft);color:var(--ok);border-color:#CBDDCE}
+.cel.off{background:var(--surface);color:var(--cinza)}
+.cob-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px 12px;align-items:end}
+.cob-form label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px}
+.cob-form input,.cob-form select{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13px;font-family:var(--sans);color:var(--ink);background:var(--surface)}
+.cob-form button{border:0;border-radius:10px;padding:10px 20px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;font-family:var(--sans)}
+.cob-in{width:100%;min-width:62px;border:1px solid transparent;border-radius:7px;padding:5px 7px;font-size:12.5px;font-family:var(--sans);color:var(--ink);background:transparent}
+.cob-in:hover{border-color:var(--line);background:var(--surface)}
+.cob-in:focus{outline:0;border-color:var(--accent);background:var(--white)}
+.cob-in.num{max-width:82px}
 </style>
 </head>
 <body>
@@ -157,7 +183,7 @@ select.mini{border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-
   <div class="side-foot">Alimentado pelo plugin <b>prospector-de-sites</b>. Cliente respondeu ou fechou? Conta pro Claude que ele atualiza aqui.</div>
 </aside>
 <main>
-  <div class="topbar"><h1 id="titulo">Visão geral</h1><span class="upd" id="upd"></span><span class="modo file" id="modo" title="Abra pelo iniciar-dashboard.bat para salvar no banco">modo arquivo</span><button id="limpar-ov" style="display:none;border:1px solid var(--line);background:var(--white);color:var(--muted);font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:var(--sans)" onclick="if(confirm('Descartar as edições feitas neste navegador e voltar aos dados do plugin?')){localStorage.removeItem('prospector_ov');location.reload()}">limpar edições locais</button><input class="busca" id="busca" placeholder="Buscar cliente, nicho, cidade..."></div>
+  <div class="topbar"><h1 id="titulo">Visão geral</h1><span class="upd" id="upd"></span><span class="modo file" id="modo" title="Abra pelo iniciar-dashboard.bat para salvar no banco">modo arquivo</span><button id="limpar-ov" style="display:none;border:1px solid var(--line);background:var(--white);color:var(--muted);font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:var(--sans)" onclick="if(confirm('Descartar as edições feitas neste navegador e voltar aos dados do plugin?')){localStorage.removeItem('prospector_ov');localStorage.removeItem('prospector_cob');location.reload()}">limpar edições locais</button><input class="busca" id="busca" placeholder="Buscar cliente, nicho, cidade..."></div>
   <div id="view"></div>
 </main>
 <div id="doc-bg"><div class="doc-bar"><b id="doc-titulo">Contrato</b><span class="sp"></span><button class="imp" onclick="printDoc()">🖨 Imprimir / Salvar PDF</button><button class="fech" onclick="fecharDoc()">Fechar ✕</button></div><iframe id="doc-frame"></iframe></div>
@@ -182,8 +208,12 @@ var OV=JSON.parse(localStorage.getItem('prospector_ov')||'{}');
 var MODE='file';
 function aplicaOv(arr){return arr.filter(function(l){return !(OV[l.slug]&&OV[l.slug]._del)}).map(function(l){return Object.assign({},l,OV[l.slug]||{})})}
 var leads=aplicaOv(D.leads||[]);
-if(Object.keys(OV).length)document.getElementById('limpar-ov')&&(document.getElementById('limpar-ov').style.display='inline-block');
-fetch('/api/leads',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){MODE='db';leads=j;fetch('/api/config',{cache:'no-store'}).then(function(r){return r.json()}).then(function(c){CFG=(c&&c.contratante!==undefined)?c.contratante:c;HG=(c&&c.hostgator)||{};if(view==='config')render()});var m=document.getElementById('modo');m.textContent='banco conectado';m.className='modo db';m.title='Alterações salvas no prospector.db';var lb=document.getElementById('limpar-ov');if(lb)lb.style.display='none';render()}).catch(function(){});
+var COBOV=JSON.parse(localStorage.getItem('prospector_cob')||'null');
+var cob=COBOV||(D.cobertura||[]);
+if(Object.keys(OV).length||COBOV)document.getElementById('limpar-ov')&&(document.getElementById('limpar-ov').style.display='inline-block');
+var DIAG=null;
+function recarregaDiag(){return fetch('/api/diagnostico',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){DIAG=j;if(view==='geral')render()}).catch(function(){DIAG=null})}
+fetch('/api/leads',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){MODE='db';leads=j;recarregaCob();recarregaDiag();fetch('/api/config',{cache:'no-store'}).then(function(r){return r.json()}).then(function(c){CFG=(c&&c.contratante!==undefined)?c.contratante:c;HG=(c&&c.hostgator)||{};if(view==='config')render()});var m=document.getElementById('modo');m.textContent='banco conectado';m.className='modo db';m.title='Alterações salvas no prospector.db';var lb=document.getElementById('limpar-ov');if(lb)lb.style.display='none';render()}).catch(function(){});
 var CORES={novo:'var(--novo)',redesenhado:'var(--rede)',publicado:'var(--pub)',proposta:'var(--prop)',respondeu:'var(--resp)',fechado:'var(--fech)',descartado:'var(--cinza)'};
 var NOMES={novo:'Novo',redesenhado:'Redesenhado',publicado:'Publicado',proposta:'Proposta enviada',respondeu:'Respondeu',fechado:'Fechado',descartado:'Descartado'};
 var ORDEM=['novo','redesenhado','publicado','proposta','respondeu','fechado'];
@@ -220,7 +250,7 @@ function setView(v){view=v;render()}
 function nav(){
  var fu=fil().filter(function(l){return l.status==='proposta'&&dias(l.dataProposta)>=4});
  var fechadosN=fil().filter(function(l){return l.status==='fechado'}).length;
- var itens=[['geral','Visão geral',null],['pipeline','Pipeline',ativos().length],['clientes','Clientes',fil().length],['sites','Sites',fil().filter(function(l){return['redesenhado','publicado','proposta','respondeu','fechado'].indexOf(l.status)>=0}).length],['comparador','Comparador',fil().filter(function(l){return l.slug&&['redesenhado','publicado','proposta','respondeu','fechado'].indexOf(l.status)>=0}).length],['followup','Follow-ups',fu.length],['contratos','Contratos',fechadosN],['financeiro','Financeiro',null],['config','Configurações',null]];
+ var itens=[['geral','Visão geral',null],['pipeline','Pipeline',ativos().length],['clientes','Clientes',fil().length],['sites','Sites',fil().filter(function(l){return['redesenhado','publicado','proposta','respondeu','fechado'].indexOf(l.status)>=0}).length],['comparador','Comparador',fil().filter(function(l){return l.slug&&['redesenhado','publicado','proposta','respondeu','fechado'].indexOf(l.status)>=0}).length],['followup','Follow-ups',fu.length],['cobertura','Cobertura',cob.length],['contratos','Contratos',fechadosN],['financeiro','Financeiro',null],['config','Configurações',null]];
  document.getElementById('nav').innerHTML=itens.map(function(i){return '<button class="'+(view===i[0]?'on':'')+'" onclick="setView(\''+i[0]+'\')">'+i[1]+(i[2]!==null?'<span class="qt">'+i[2]+'</span>':'')+'</button>'}).join('');
  document.getElementById('titulo').textContent=itens.filter(function(i){return i[0]===view})[0][1];
 }
@@ -237,6 +267,13 @@ function acoes(l){var a=[];
 
 function card(l){var f=l.status==='proposta'&&dias(l.dataProposta)>=4?'<span class="tag fup">follow-up '+dias(l.dataProposta)+'d</span>':'';
  return '<div class="card" draggable="true" ondragstart="dragIni(event,\''+l.slug+'\')" ondragend="dragFim(event)" style="--cor:'+CORES[l.status]+'"><div class="nm">'+l.nome+f+'</div><div class="mt">'+(l.nota?'★ '+l.nota+' ('+l.avaliacoes+')':'')+(l.cidade?' · '+l.cidade:'')+'</div>'+(l.motivo?'<div class="motivo">'+l.motivo+'</div>':'')+(l.obs?'<div class="mt">'+l.obs+'</div>':'')+(l.valor?'<div class="valor">R$ '+l.valor.toLocaleString('pt-BR')+(l.manutencao?' <span style="color:var(--muted);font-weight:600;font-size:11px">+ R$ '+l.manutencao.toLocaleString('pt-BR')+'/mês</span>':'')+'</div>':'')+acoes(l)+'</div>'}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function avisoDiag(){
+ if(!DIAG||!DIAG.total)return '';
+ var n=DIAG.total;
+ return '<details class="diag"><summary>'+n+(n===1?' inconsistência encontrada':' inconsistências encontradas')+' entre o banco e a pasta sites/ — clique para ver</summary><ul>'+
+  DIAG.problemas.map(function(p){return '<li><b>'+esc(p.tipo)+'</b> '+esc(p.detalhe)+'<i>'+esc(p.sugestao)+'</i></li>'}).join('')+
+  '</ul></details>'}
 function vGeral(){
  var ls=fil(),at=ativos();
  var props=ls.filter(function(l){return l.status==='proposta'});
@@ -244,7 +281,8 @@ function vGeral(){
  var fech=ls.filter(function(l){return l.status==='fechado'});
  var receita=fech.reduce(function(a,l){return a+(l.valor||0)},0);
  var pot=at.length*700;
- var html='<div class="stats">'+[['Leads ativos',at.length,''],['Propostas na rua',props.length,''],['Follow-ups pendentes',fu.length,'ambar'],['Fechados',fech.length,'verde'],['Receita fechada','R$ '+receita.toLocaleString('pt-BR'),'verde'],['Potencial (R$700/página)','R$ '+pot.toLocaleString('pt-BR'),'laranja']].map(function(s){return '<div class="stat '+s[2]+'"><div class="n">'+s[1]+'</div><div class="l">'+s[0]+'</div></div>'}).join('')+'</div>';
+ var html=avisoDiag();
+ html+='<div class="stats">'+[['Leads ativos',at.length,''],['Propostas na rua',props.length,''],['Follow-ups pendentes',fu.length,'ambar'],['Fechados',fech.length,'verde'],['Receita fechada','R$ '+receita.toLocaleString('pt-BR'),'verde'],['Potencial (R$700/página)','R$ '+pot.toLocaleString('pt-BR'),'laranja']].map(function(s){return '<div class="stat '+s[2]+'"><div class="n">'+s[1]+'</div><div class="l">'+s[0]+'</div></div>'}).join('')+'</div>';
  var max=Math.max.apply(null,ORDEM.map(function(s){return ls.filter(function(l){return l.status===s}).length}).concat([1]));
  html+='<div class="painel funil"><h2>Funil do pipeline</h2>'+ORDEM.map(function(s){var n=ls.filter(function(l){return l.status===s}).length;return '<div class="linha"><span>'+NOMES[s]+'</span><div class="barra"><div class="fill" style="width:'+(n/max*100)+'%;background:'+CORES[s]+'"></div></div><b>'+n+'</b></div>'}).join('')+'</div>';
  html+='<div class="painel"><h2>Follow-ups pendentes (4+ dias sem resposta)</h2>'+(fu.length?fu.map(function(l){return '<div class="fup-item"><b>'+l.nome+'</b><span class="dias">'+dias(l.dataProposta)+' dias</span><span style="color:var(--muted);font-size:12px">proposta em '+l.dataProposta+'</span>'+(l.whatsapp?'<a style="margin-left:auto;font-size:12px;font-weight:700;color:var(--accent-2)" href="https://wa.me/'+l.whatsapp+'" target="_blank">chamar no WhatsApp →</a>':'')+'</div>'}).join(''):'<div class="vazio">Nenhum follow-up pendente. 👌</div>')+'</div>';
@@ -315,7 +353,64 @@ function vComparador(){var ls=fil().filter(function(l){return l.slug&&['redesenh
  +'<div class="cmp-grid"><div class="cmp-col"><div class="cab antes">Antes — site atual'+(antiga?' · <a href="'+antiga+'" target="_blank" style="color:inherit">abrir ↗</a>':'')+'</div>'+(antiga?'<iframe src="'+antiga+'" loading="lazy"></iframe>':'<div class="vazio" style="padding:30px">Sem URL do site antigo registrada.</div>')+'</div>'
  +'<div class="cmp-col"><div class="cab depois">Depois — nova versão · <a href="'+nova+'" target="_blank" style="color:inherit">abrir ↗</a></div><iframe src="'+nova+'"></iframe></div></div>'
  +'<div style="font-size:11.5px;color:var(--muted);margin-top:8px">Alguns sites antigos bloqueiam visualização embutida — se o lado "Antes" ficar em branco, use o link "abrir ↗".</div>'}
-function render(){nav();document.getElementById('view').innerHTML={geral:vGeral,pipeline:vPipeline,clientes:vClientes,sites:vSites,comparador:vComparador,followup:vFollowup,contratos:vContratos,financeiro:vFinanceiro,config:vConfig}[view]()}
+var cobPais='todos';
+var COB_CAMPOS=['cidade','estado','pais','nicho','rodadaEm','avaliados','qualificados','descartados','obs'];
+function chaveCob(r){return ((r.cidade||'')+'|'+(r.estado||'')+'|'+(r.nicho||'')).toLowerCase()}
+function gravaCobLocal(){localStorage.setItem('prospector_cob',JSON.stringify(cob));render()}
+function recarregaCob(){return fetch('/api/cobertura',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){cob=j;if(view==='cobertura')render()})}
+function salvarCob(id,ch){
+ if(MODE==='db'){fetch('/api/cobertura/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ch)}).then(recarregaCob);return}
+ cob=cob.map(function(r){return r.id===id?Object.assign({},r,ch):r});gravaCobLocal()}
+function deletarCob(id){if(!confirm('Excluir esta rodada da cobertura?'))return;
+ if(MODE==='db'){fetch('/api/cobertura/'+id,{method:'DELETE'}).then(recarregaCob);return}
+ cob=cob.filter(function(r){return r.id!==id});gravaCobLocal()}
+function registrarCob(){
+ var r={};COB_CAMPOS.forEach(function(k){var el=document.getElementById('cob-'+k);if(el)r[k]=el.value});
+ if(!r.cidade||!r.nicho){alert('Cidade e nicho são obrigatórios.');return}
+ ['avaliados','qualificados','descartados'].forEach(function(k){r[k]=parseInt(r[k])||0});
+ r.pais=r.pais||'BR';r.rodadaEm=r.rodadaEm||new Date().toISOString().slice(0,10);
+ if(MODE==='db'){fetch('/api/cobertura',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)}).then(recarregaCob);return}
+ var ja=cob.filter(function(x){return chaveCob(x)===chaveCob(r)})[0];
+ if(ja){['avaliados','qualificados','descartados'].forEach(function(k){ja[k]=(parseInt(ja[k])||0)+r[k]});ja.rodadaEm=r.rodadaEm;if(r.obs)ja.obs=r.obs}
+ else{r.id=cob.reduce(function(a,x){return Math.max(a,x.id||0)},0)+1;cob=cob.concat([r])}
+ gravaCobLocal()}
+function cobFil(){return cob.filter(function(r){return cobPais==='todos'||(r.pais||'BR')===cobPais})}
+function vCobertura(){
+ var rs=cobFil();
+ var cidades=[],nichos=[],porChave={};
+ rs.forEach(function(r){
+  var cid=(r.cidade||'')+(r.estado?' / '+r.estado:'');
+  if(cidades.indexOf(cid)<0)cidades.push(cid);
+  if(nichos.indexOf(r.nicho)<0)nichos.push(r.nicho);
+  porChave[(cid+'|'+r.nicho).toLowerCase()]=r});
+ cidades.sort();nichos.sort();
+ var aval=rs.reduce(function(a,r){return a+(parseInt(r.avaliados)||0)},0);
+ var qual=rs.reduce(function(a,r){return a+(parseInt(r.qualificados)||0)},0);
+ var taxa=aval?Math.round(qual/aval*100):0;
+ var html='<div class="stats">'+[['Cidades trabalhadas',cidades.length,''],['Nichos atacados',nichos.length,''],['Combinações cobertas',rs.length+' de '+(cidades.length*nichos.length||0),'laranja'],['Taxa de qualificação',taxa+'%','verde']].map(function(s){return '<div class="stat '+s[2]+'"><div class="n">'+s[1]+'</div><div class="l">'+s[0]+'</div></div>'}).join('')+'</div>';
+ html+='<div class="painel"><h2>Matriz cidade × nicho <span style="float:right;font-family:var(--sans);font-size:12px;font-weight:600;color:var(--muted)">País: '+['todos','BR','US'].map(function(p){return '<a href="#" onclick="cobPais=\''+p+'\';render();return false" style="margin-left:8px;text-decoration:none;font-weight:'+(cobPais===p?'800':'600')+';color:'+(cobPais===p?'var(--accent-2)':'var(--muted)')+'">'+p+'</a>'}).join('')+'</span></h2>';
+ if(!rs.length)html+='<div class="vazio">Nenhuma rodada registrada ainda — o /prospectar registra sozinho ao fim de cada varredura, ou use o formulário abaixo.</div>';
+ else{
+  html+='<div class="cob-wrap"><table class="cob-matriz"><thead><tr><th></th>'+nichos.map(function(n){return '<th>'+n+'</th>'}).join('')+'</tr></thead><tbody>'+cidades.map(function(cid){
+   var p=cid.split(' / ');
+   return '<tr><th class="cid">'+p[0]+(p[1]?'<span>'+p[1]+'</span>':'')+'</th>'+nichos.map(function(n){
+    var r=porChave[(cid+'|'+n).toLowerCase()];
+    return '<td>'+(r?'<span class="cel on" title="'+(r.rodadaEm||'sem data')+' · '+(r.qualificados||0)+' qualificados de '+(r.avaliados||0)+' avaliados">'+(r.rodadaEm||'✓')+'<br>'+(r.qualificados||0)+' leads</span>':'<span class="cel off" title="campo aberto — ainda não prospectado">livre</span>')+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table></div>';
+  html+='<div style="font-size:11.5px;color:var(--muted);margin-top:10px">Célula verde = já prospectado (data + leads qualificados). Célula cinza = campo aberto.</div>'}
+ html+='</div>';
+ html+='<div class="painel"><h2>Registrar rodada</h2><div class="cob-form">'+
+  [['cidade','Cidade','text'],['estado','Estado/UF','text'],['nicho','Nicho','text'],['rodadaEm','Data da rodada','date'],['avaliados','Avaliados','number'],['qualificados','Qualificados','number'],['descartados','Descartados','number'],['obs','Observações','text']].map(function(c){
+   return '<div><label>'+c[1]+'</label><input id="cob-'+c[0]+'" type="'+c[2]+'"></div>'}).join('')+
+  '<div><label>País</label><select id="cob-pais"><option value="BR">BR</option><option value="US">US</option></select></div>'+
+  '<div><button onclick="registrarCob()">Registrar</button></div></div>'+
+  '<div style="font-size:11.5px;color:var(--muted);margin-top:10px">Registrar a mesma cidade+estado+nicho de novo soma nos contadores e atualiza a data — nunca duplica a linha.</div></div>';
+ html+='<div class="painel" style="overflow-x:auto"><h2>Rodadas registradas</h2>'+(rs.length?'<table><thead><tr><th>Cidade</th><th>UF</th><th>País</th><th>Nicho</th><th>Rodada em</th><th>Aval.</th><th>Qual.</th><th>Desc.</th><th>Taxa</th><th>Obs</th><th></th></tr></thead><tbody>'+rs.map(function(r){
+  var t=(parseInt(r.avaliados)||0)?Math.round((parseInt(r.qualificados)||0)/parseInt(r.avaliados)*100)+'%':'—';
+  var inp=function(k,tipo,cls){return '<input class="cob-in '+(cls||'')+'" type="'+tipo+'" value="'+String(r[k]==null?'':r[k]).replace(/"/g,'&quot;')+'" onchange="salvarCob('+r.id+',{'+k+':this.value})">'};
+  return '<tr><td>'+inp('cidade','text')+'</td><td>'+inp('estado','text','num')+'</td><td><select class="mini" onchange="salvarCob('+r.id+',{pais:this.value})">'+['BR','US'].map(function(p){return '<option value="'+p+'"'+((r.pais||'BR')===p?' selected':'')+'>'+p+'</option>'}).join('')+'</select></td><td>'+inp('nicho','text')+'</td><td>'+inp('rodadaEm','date')+'</td><td>'+inp('avaliados','number','num')+'</td><td>'+inp('qualificados','number','num')+'</td><td>'+inp('descartados','number','num')+'</td><td>'+t+'</td><td>'+inp('obs','text')+'</td><td><a href="#" class="del" style="color:#B0483B;font-size:11px;font-weight:700;text-decoration:none" onclick="deletarCob('+r.id+');return false">✕ excluir</a></td></tr>'
+ }).join('')+'</tbody></table>':'<div class="vazio">Nenhuma rodada registrada para este país.</div>')+'</div>';
+ return html}
+function render(){nav();document.getElementById('view').innerHTML={geral:vGeral,pipeline:vPipeline,clientes:vClientes,sites:vSites,comparador:vComparador,followup:vFollowup,cobertura:vCobertura,contratos:vContratos,financeiro:vFinanceiro,config:vConfig}[view]()}
 var dragSlug=null;
 function dragIni(e,slug){dragSlug=slug;e.target.classList.add('arrastando');e.dataTransfer.effectAllowed='move'}
 function dragFim(e){e.target.classList.remove('arrastando')}

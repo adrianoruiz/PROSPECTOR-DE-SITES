@@ -10,6 +10,7 @@ Redesenhe as páginas dos leads seguindo a skill `redesign-premium`. Ela é obri
 1. Leia `prospector-config.json` e `leads.md` na pasta conectada.
 2. Se `$ARGUMENTS` trouxer URLs ou nomes, use-os. Senão, selecione os leads com status `novo` mais bem ranqueados — **mínimo de 5 clientes por lote** (se houver menos de 5 leads novos, use todos e avise que rodar `/prospectar` de novo aumenta o lote).
 3. Confirme a lista com o usuário antes de começar.
+4. **LEIA o `slug` de cada lead no banco** (`SELECT slug FROM leads WHERE nome=...` no `prospector.db`, ou `GET /api/leads`) ANTES de criar qualquer pasta. A pasta é `sites/[slug]/` com o slug EXATO do banco — é PROIBIDO inventar um nome curto ("vitaly" no lugar de "vitaly-centro-integrado-de-saude"): a pasta fora do slug deixa o lead travado em `novo` e some do Comparador e da vista Sites. Regra completa na seção "Como gerar o slug" da skill `dashboard-leads`. Se um lead não tiver slug no banco, gere-o pela regra e grave antes de seguir.
 
 ## Para cada cliente do lote
 

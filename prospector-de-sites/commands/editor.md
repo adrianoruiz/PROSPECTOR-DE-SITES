@@ -7,7 +7,7 @@ Gere a versão editável de uma página redesenhada.
 
 ## Passos
 
-1. Identifique o cliente por `$ARGUMENTS` ou, se vazio, liste as pastas em `sites/` e pergunte qual página editar.
+1. Identifique o cliente por `$ARGUMENTS` ou, se vazio, liste as pastas em `sites/` e pergunte qual página editar. O `[slug]` é LIDO do banco — nunca recalculado do nome (regra na skill `dashboard-leads`, seção "Como gerar o slug").
 2. Leia `sites/[slug]/[slug].html`.
 3. Crie (ou regenere) `sites/[slug]/[slug]-editor.html`: uma cópia da página com a camada de edição injetada antes de `</body>`. O script completo da camada de edição está em `references/editor-visual.md` da skill `redesign-premium` — use-o exatamente como está.
 4. Apresente o arquivo `[slug]-editor.html` ao usuário e explique em 3 linhas como usar:

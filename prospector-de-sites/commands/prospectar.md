@@ -10,6 +10,20 @@ Prospecte leads qualificados seguindo a skill `prospeccao-maps`.
 1. Leia `prospector-config.json` na pasta conectada. Se não existir, oriente a rodar `/setup` primeiro.
 2. Determine nicho e cidade: use os argumentos `$ARGUMENTS` se informados; senão, pergunte ao usuário qual dos nichos padrão do config usar (e confirme a cidade). O usuário SEMPRE pode trocar nicho e cidade na hora — nunca trave nos padrões.
 3. Leia `leads.md` na pasta conectada (se existir) para saber quais profissionais já foram avaliados — estes devem ser EXCLUÍDOS da nova busca.
+4. **Consulte a cobertura** antes de buscar: leia a tabela `cobertura` do `prospector.db` (ou `GET http://localhost:8765/api/cobertura` se o dashboard estiver rodando) procurando a combinação cidade+estado+nicho, sem diferenciar maiúsculas:
+
+```bash
+python3 - <<'EOF'
+import sqlite3
+c = sqlite3.connect('CAMINHO/prospector.db')
+try:
+    for r in c.execute("SELECT cidade,estado,nicho,rodadaEm,avaliados,qualificados FROM cobertura WHERE lower(cidade)=lower(?) AND lower(nicho)=lower(?)", ('Blumenau','dentista')):
+        print(r)
+except sqlite3.OperationalError: pass  # banco antigo, sem a tabela ainda
+EOF
+```
+
+   Se já houver rodada registrada, AVISE o usuário antes de gastar a busca — algo como "Blumenau + dentista já foi prospectado em 2026-07-19: 25 avaliados, 8 qualificados" — e ofereça: **(a)** pular essa combinação e sugerir cidades/nichos ainda livres (olhe a matriz da aba Cobertura), **(b)** continuar de onde parou, excluindo os negócios já avaliados, ou **(c)** rodar de novo mesmo assim. Nunca decida sozinho: espere a escolha.
 
 ## Execução
 
@@ -25,6 +39,7 @@ Use as ferramentas do Claude in Chrome (carregue via ToolSearch se necessário) 
 
 1. **Google Sheets**: salve os leads numa PLANILHA DO GOOGLE via conector do Google Drive — `create_file` com `contentMimeType: text/csv` e o CSV como `textContent` (a conversão automática cria uma planilha nativa do Sheets). Título: `Leads Prospector — [nicho] [cidade]`. Colunas: #, Nome, Nota, Avaliações, E-mail, Telefone, Site atual, Motivo, Situação (Qualificado/Descartado + motivo), Status, URL nova. Inclua TODOS os avaliados (qualificados E descartados), ranqueados por potencial (melhor nota + pior site primeiro). Retorne o link da planilha ao usuário.
 2. **Cópia local**: mantenha `leads.md` na pasta conectada como cópia de trabalho (o conector do Drive não edita células — os status `novo → redesenhado → publicado → proposta enviada` são atualizados no leads.md local, e a planilha do Google é regenerada com os dados acumulados ao fim de cada comando que muda status). Em rodadas novas, some os leads novos aos antigos numa planilha só, nunca duplique cliente já avaliado.
-3. **Dashboard**: crie/atualize `dashboard.html` na raiz da pasta conectada seguindo a skill `dashboard-leads` (template + merge do JSON embutido) — leads novos entram com `status: novo`, descartados com `status: descartado`.
+3. **Dashboard**: crie/atualize `dashboard.html` na raiz da pasta conectada seguindo a skill `dashboard-leads` (template + merge do JSON embutido) — leads novos entram com `status: novo`, descartados com `status: descartado`. **Este comando é o único que GERA o slug**: aplique a função `slugify` da seção "Como gerar o slug" da skill `dashboard-leads` sobre o nome COMPLETO do lead e grave o resultado no banco e no `leads.md`. O slug nasce aqui e nunca mais muda — os outros comandos só leem.
+4. **Registre a cobertura**: grave a rodada na tabela `cobertura` do `prospector.db` com os números REAIS desta varredura (`cidade`, `estado`, `pais`, `nicho`, `rodadaEm` = hoje, `avaliados` = quantos negócios foram olhados, `qualificados` = quantos viraram lead, `descartados`) — use o snippet de upsert da skill `dashboard-leads`. Rodar a mesma combinação de novo SOMA nos contadores, nunca cria linha duplicada. Regenere o snapshot do `dashboard.html` já com a cobertura embutida.
 
-A entrega final DEVE incluir a confirmação explícita "Dashboard atualizado: [N] leads" (criando o dashboard pela skill `dashboard-leads` se a pasta não tiver um — obrigatório, nunca pule). Mostre a tabela ao usuário com o link da planilha e do `dashboard.html`, e sugira o próximo passo: `/redesenhar` para os 5+ melhores leads.
+A entrega final DEVE incluir a confirmação explícita "Dashboard atualizado: [N] leads" e "Cobertura registrada: [cidade]/[UF] × [nicho] — [avaliados] avaliados, [qualificados] qualificados" (criando o dashboard pela skill `dashboard-leads` se a pasta não tiver um — obrigatório, nunca pule). Mostre a tabela ao usuário com o link da planilha e do `dashboard.html`, e sugira o próximo passo: `/redesenhar` para os 5+ melhores leads.
