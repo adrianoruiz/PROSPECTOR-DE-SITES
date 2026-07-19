@@ -11,9 +11,12 @@ function Log($msg,$cor="Gray"){
   else { Write-Host $msg -ForegroundColor $cor }
 }
 if (-not (Test-Path "fila-publicacao.txt")) { if(-not $Auto){ Log "Nada na fila - peca /publicar ao Claude primeiro." "Yellow" }; Fim 0 }
-try { $cfg = Get-Content "prospector-config.json" -Raw -Encoding UTF8 | ConvertFrom-Json } catch { Log "ERRO: prospector-config.json nao encontrado/invalido." "Red"; Fim 1 }
-$u = $cfg.hostgator.usuario; $p = $cfg.hostgator.senha; $srv = $cfg.hostgator.servidor
-if (-not $u -or -not $p -or -not $srv) { Log "ERRO: preencha a conexao HostGator (dashboard > Configuracoes) incluindo a senha." "Red"; Fim 1 }
+# Credencial de FTP: mora so aqui, na maquina do usuario (o upload roda aqui).
+# Escrita uma vez pelo /setup. Nunca ecoada.
+$cfgPath = Join-Path $env:USERPROFILE ".prospector\ftp.json"
+try { $cfg = Get-Content $cfgPath -Raw -Encoding UTF8 | ConvertFrom-Json } catch { Log "ERRO: ~/.prospector/ftp.json nao encontrado/invalido. Rode /setup para gravar a conexao FTP." "Red"; Fim 1 }
+$u = $cfg.usuario; $p = $cfg.senha; $srv = $cfg.servidor
+if (-not $u -or -not $p -or -not $srv) { Log "ERRO: ~/.prospector/ftp.json incompleto (precisa de usuario, senha e servidor). Rode /setup para gravar a conexao FTP." "Red"; Fim 1 }
 $fila = Get-Content "fila-publicacao.txt" -Encoding UTF8 | Where-Object { $_ -match "\|" }
 $ok = 0; $falha = 0
 foreach ($linha in $fila) {

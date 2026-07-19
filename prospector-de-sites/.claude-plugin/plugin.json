@@ -1,7 +1,7 @@
 {
   "name": "prospector-de-sites",
-  "version": "2.2.0",
-  "description": "COMECE PELO /setup (2 min, uma vez só). Prospecção semi-automática de clientes: encontra negócios bem avaliados com sites ruins no Google Maps, redesenha as páginas com estética premium, publica na HostGator (com página-capa antes/depois e HTTPS verificado) e envia proposta anti-spam por e-mail via Gmail, com follow-up automático. Leads em planilha do Google Sheets e dashboard local (kanban, contratos e financeiro).",
+  "version": "3.0.0",
+  "description": "COMECE PELO /setup (2 min, uma vez só — atualizando da 2.x, rode /setup de novo: a credencial mudou). Prospecção semi-automática de clientes: encontra negócios bem avaliados com sites ruins no Google Maps, redesenha as páginas com estética premium, publica (prévia no app ou FTP na HostGator, com HTTPS verificado) e envia proposta anti-spam por e-mail via Gmail, com follow-up. O estado vive no app Prospector (Nuxt + Postgres): painel web com funil, comparador antes/depois, editor de página, contratos e financeiro. O plugin opera por API HTTP. Leads também exportados para planilha do Google Sheets.",
   "author": {
     "name": "Helio Arreche"
   },

@@ -6,12 +6,14 @@ AUTO=0; [ "$1" = "--auto" ] && AUTO=1
 log(){ if [ $AUTO -eq 1 ]; then echo "[$(date '+%d/%m %H:%M:%S')] $1" >> publicador-log.txt; else echo "$1"; fi; }
 fim(){ [ $AUTO -eq 0 ] && read -p "Pressione Enter para fechar..."; exit $1; }
 [ -f fila-publicacao.txt ] || { [ $AUTO -eq 0 ] && log "Nada na fila — peca /publicar ao Claude primeiro."; fim 0; }
-CFG=prospector-config.json
-[ -f $CFG ] || { log "ERRO: prospector-config.json nao encontrado."; fim 1; }
-U=$(python3 -c "import json;print(json.load(open('$CFG'))['hostgator'].get('usuario',''))")
-P=$(python3 -c "import json;print(json.load(open('$CFG'))['hostgator'].get('senha',''))")
-SRV=$(python3 -c "import json;print(json.load(open('$CFG'))['hostgator'].get('servidor',''))")
-[ -n "$U" ] && [ -n "$P" ] && [ -n "$SRV" ] || { log "ERRO: preencha a conexao HostGator no dashboard (Configuracoes), incluindo a senha."; fim 1; }
+# Credencial de FTP: mora so aqui, na maquina do usuario (o upload roda aqui).
+# Escrita uma vez pelo /setup, permissao 600. Nunca ecoada.
+CFG="$HOME/.prospector/ftp.json"
+[ -f "$CFG" ] || { log "ERRO: ~/.prospector/ftp.json nao encontrado. Rode /setup para gravar a conexao FTP."; fim 1; }
+U=$(python3 -c "import json,os;print(json.load(open(os.path.expanduser('~/.prospector/ftp.json'))).get('usuario',''))" 2>/dev/null)
+P=$(python3 -c "import json,os;print(json.load(open(os.path.expanduser('~/.prospector/ftp.json'))).get('senha',''))" 2>/dev/null)
+SRV=$(python3 -c "import json,os;print(json.load(open(os.path.expanduser('~/.prospector/ftp.json'))).get('servidor',''))" 2>/dev/null)
+[ -n "$U" ] && [ -n "$P" ] && [ -n "$SRV" ] || { log "ERRO: ~/.prospector/ftp.json incompleto (precisa de usuario, senha e servidor). Rode /setup para gravar a conexao FTP."; fim 1; }
 OK=0; FALHA=0
 while IFS='|' read -r LOCAL REMOTO; do
   LOCAL=$(echo "$LOCAL" | xargs); REMOTO=$(echo "$REMOTO" | xargs)

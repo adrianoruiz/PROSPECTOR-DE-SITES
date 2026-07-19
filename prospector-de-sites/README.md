@@ -1,47 +1,90 @@
-# Prospector de Sites — v2.2.0
+# Prospector de Sites — v3.0.0
 
-Prospecção semi-automática de clientes com sites ruins: acha, redesenha, publica e oferta.
+Prospecção semi-automática de clientes com sites ruins: acha, redesenha, publica
+e oferta.
+
+## Arquitetura
+
+O plugin é o **operador**; o estado mora no **app Prospector** (Nuxt + Postgres).
+Os comandos não guardam nada localmente: leem e gravam pela API HTTP do app.
+
+```
+comandos do plugin  ──HTTP──▶  API do Prospector  ──▶  Postgres
+   (/prospectar, …)              (Nuxt)                 leads, sites,
+                                     │                  versões de HTML,
+                                     ▼                  propostas, contratos,
+                                 painel web             cobertura, config
+                              (funil, comparador,
+                               contratos, financeiro)
+```
+
+- **Painel** — é o próprio app, no navegador. Funil, kanban, comparador
+  antes/depois, editor de página, follow-ups, contratos e financeiro. Não existe
+  mais dashboard local nem servidor de dashboard.
+- **HTML dos sites** — versionado no banco (`site_versions`), não em arquivo. A
+  prévia pública sai em `/p/[slug]`.
+- **Configuração** — na tabela `app_config`, via `GET`/`PUT /api/config`.
+  Segredo (senha de FTP) fica no `.env` do servidor, nunca no banco e nunca no
+  chat.
+- **Credencial do plugin** — `~/.prospector/api.json` (permissão 600), com
+  `baseUrl` e um token `psk_…`. Criada uma vez pelo `/setup`.
+- **Publicação** — o upload por FTP continua rodando na máquina do usuário
+  (a rede do sandbox não alcança FTP), mas quem guarda o estado do que foi
+  publicado é a API.
+
+Quem fala HTTP é a skill `api-client` — helper de chamada, tratamento de erro e
+tabela de endpoints. Nenhum comando monta `curl` na mão.
 
 ## O ciclo
 
-1. `/setup` — roda uma vez: assinatura, nichos padrão, dados do cPanel da HostGator (com teste de publicação).
-2. `/prospectar [nicho] [cidade]` — busca no Google Maps negócios nota ≥ 4.7 com site fraco e gera `leads.md` com e-mail, motivo e ranking (padrão: 10 leads).
-3. `/redesenhar` — recria as páginas dos 5+ melhores leads com estética premium, mantendo o conteúdo, logo e paleta reais do cliente.
-4. `/editor [cliente]` — gera versão editável no navegador (textos e imagens) com exportação da página final.
-5. `/publicar [cliente|todos]` — sobe na HostGator em `dominio.com/clientes/[slug]/`, gera a página-capa de apresentação (antes/depois personalizado, `proposta.html`) e só conclui com HTTPS validado.
-6. `/proposta [cliente|todos]` — escreve o e-mail (rapport, sem preço), passa pela checklist anti-spam e cria o rascunho no Gmail com a página-capa como único link.
-7. `/respostas` — verifica no Gmail quem respondeu e atualiza o dashboard sozinho (dica: agende a verificação diária).
-8. `/followup [cliente]` — 3+ dias sem resposta? Gera o follow-up gentil (1 por lead, nunca repete) já checando quem respondeu antes.
-9. `/contrato [cliente]` — cliente fechou? Gera a minuta do contrato (pronta pra PDF) com os dados do negócio e deixa o rascunho no Gmail.
+1. `/setup` — roda uma vez: conecta na API, grava a chave e as preferências
+   (assinatura, nichos, cidade, leads por busca, modo de envio) e instala o
+   publicador de FTP.
+2. `/prospectar [nicho] [cidade]` — busca no Google Maps negócios nota ≥ 4.7 com
+   site fraco e cadastra os leads qualificados (padrão: 10).
+3. `/redesenhar` — recria as páginas dos 5+ melhores leads com estética premium,
+   mantendo conteúdo, logo e paleta reais do cliente.
+4. `/editor [cliente]` — abre a página no editor visual do painel (textos e
+   imagens), gravando uma nova versão.
+5. `/publicar [cliente|todos]` — sobe a página, registra a URL pública e só
+   conclui com HTTPS validado.
+6. `/proposta [cliente|todos]` — escreve o e-mail (rapport, sem preço), passa
+   pela checklist anti-spam e cria o rascunho no Gmail com a prévia como único
+   link.
+7. `/respostas` — verifica no Gmail quem respondeu e atualiza o funil.
+8. `/followup [cliente]` — 3+ dias sem resposta? Gera o follow-up gentil
+   (1 por lead, nunca repete) já checando quem respondeu antes.
+9. `/contrato [cliente]` — cliente fechou? Gera a minuta do contrato com os dados
+   do negócio e deixa o rascunho no Gmail.
 
-## Manual e publicação automática
+## Operação Brasil × Estados Unidos
 
-O pacote inclui `manual.html` — o manual completo do usuário, copiado pra pasta no `/setup` e **atualizado a cada versão do plugin**. A publicação na HostGator é automática: senha preenchida uma vez no `prospector-config.json` + `publicar-agora.bat` (2 cliques) quando a rede do sandbox não alcança o FTP — sem login no cPanel.
+A operação é separada por país. Cada lead tem `country` (`BR` ou `US`), gravado
+também na cobertura.
 
-## Dashboard local
-
-O plugin mantém um painel de controle na sua pasta: `prospector.db` (banco SQLite) + `dashboard.html`. Duplo clique em `iniciar-dashboard.bat` (requer Python) abre o painel completo em http://localhost:8765 — kanban com drag & drop, edição, exclusão, funil, comparador antes/depois integrado, follow-ups, controle de contratos (pendente/enviado/assinado) e painel financeiro (recebido, a receber e MRR das manutenções), tudo salvo no banco.
-
-## Operação Brasil × Estados Unidos (novo na v2.2.0)
-
-O plugin agora separa a operação por país. Ao prospectar, cada lead recebe um campo `pais` (`BR` por padrão, `US` para cidade americana), gravado também na cobertura.
-
-- **Chave BR/US no dashboard** — um seletor global (todos / BR / US) filtra todas as abas de uma vez.
-- **Moedas nunca se misturam** — lead BR mostra valores em R$, lead US em US$; Financeiro e Visão geral somam cada moeda em separado.
-- **Painel em PT/EN** — toggle de idioma do dashboard entre português e inglês.
-- **Proposta e contrato em inglês para lead US** — o e-mail de proposta sai em inglês americano natural e o contrato é redigido em inglês, ambos com valores em dólar. Nos EUA o e-mail público é raro (negócios usam formulário/redes), então a prospecção capricha na busca de contato e anota o canal disponível.
+- **Filtro BR/US** — o painel filtra tudo de uma vez pelo país.
+- **Moedas nunca se misturam** — valores são centavos inteiros + moeda; lead BR
+  em R$, lead US em US$. Financeiro soma cada moeda em separado.
+- **Proposta e contrato em inglês para lead US** — e-mail em inglês americano
+  natural e contrato redigido em inglês, ambos em dólar. Nos EUA o e-mail público
+  é raro (negócios usam formulário/redes), então a prospecção capricha na busca
+  de contato e anota o canal disponível.
 
 ## Requisitos
 
-- Extensão Claude in Chrome conectada (prospecção no Maps e fallback de deploy)
+- App Prospector rodando e alcançável (local ou publicado)
+- Uma chave de API gerada no painel (Configurações → Chaves de API)
+- Extensão Claude in Chrome conectada (prospecção no Maps)
 - Conector do Gmail (rascunhos de proposta)
-- Pasta conectada no Cowork (armazena config, leads e sites)
-- Hospedagem HostGator com acesso ao cPanel
+- Hospedagem com FTP para a publicação das páginas
 
 ## Onde ficam os dados
 
-Tudo na pasta conectada: `prospector-config.json` (preferências e credenciais — a senha do cPanel fica em texto no seu computador), `leads.md` (pipeline) e `sites/[slug]/` (páginas criadas).
+Tudo na API/Postgres do app: leads, sites e versões de HTML, propostas,
+contratos, cobertura e configuração. Na máquina do usuário ficam só
+`~/.prospector/api.json` (a credencial), o publicador de FTP e o `manual.html`.
 
 ## Como atualizar
 
-No chat: `/plugin marketplace update arrecheneto-plugins` e reinicie o app (versão certa: 2.2.0). Da 2.1.0 em diante, atualiza sozinho.
+No chat: `/plugin marketplace update arrecheneto-plugins` e reinicie o app
+(versão certa: 3.0.0).

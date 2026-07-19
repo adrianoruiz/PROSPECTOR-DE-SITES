@@ -1,8 +1,21 @@
-# Camada de edição visual
+# Camada de edição visual — REFERÊNCIA HISTÓRICA
 
-Para gerar `editor.html`: copie o `index.html` do cliente e injete o bloco abaixo imediatamente antes de `</body>`. Não altere mais nada na página.
+> **Esta camada não é mais gerada pelo plugin.** O editor visual virou a página
+> **`/painel/sites/[slug]`** do app Prospector (`app/pages/painel/sites/[slug].vue`),
+> que faz o mesmo trabalho direto na prévia e **salva criando uma versão nova**
+> (`POST /api/sites/:slug/versions` com `source: "editor"`), com rollback para
+> qualquer versão anterior — em vez de baixar um HTML exportado e substituir
+> arquivo na mão.
+>
+> O que mudou de verdade: a exportação por download morreu (o app grava no banco),
+> o `[slug]-editor.html` deixou de existir e a troca de imagem por base64 deixou
+> de ser a única opção. O resto da lógica — quais elementos viram editáveis, como
+> a página é limpa antes de salvar — foi reimplementado no app a partir daqui.
+>
+> O bloco abaixo fica registrado como origem dessa lógica e para o caso de alguém
+> precisar editar um HTML solto fora do app. **Não injete isso em página entregue.**
 
-Como funciona para o usuário:
+Como funcionava (e como o app se comporta hoje):
 - Clicar em qualquer texto → edita direto na página (contenteditable).
 - Clicar em qualquer imagem → seletor de arquivo; a imagem escolhida é embutida em base64.
 - Barra fixa no topo com "Exportar página" → baixa o HTML limpo (sem a camada de edição), pronto para substituir o `index.html` e publicar.

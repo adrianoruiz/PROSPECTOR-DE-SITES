@@ -21,13 +21,13 @@ O e-mail NÃO vende — ele desperta curiosidade e prova trabalho feito. O fecha
 - **Assunto**: pergunta pessoal e específica, ≤ 60 caracteres, sem cara de marketing. Ex.: `Dra. [Nome], posso te mostrar uma coisa sobre seu site?` ou `Preparei algo para a [Clínica X]`.
 - **Parágrafo 1**: quem encontrou + elogio específico (avaliações/credencial).
 - **Parágrafo 2**: observação sobre o site atual (1-2 pontos objetivos).
-- **Parágrafo 3**: "preparei uma nova versão, já no ar" + O ÚNICO LINK do e-mail: a página-capa (`.../proposta.html`), que mostra antes e depois lado a lado. Se a capa não existir, linkar a página nova direto.
+- **Parágrafo 3**: "preparei uma nova versão, já no ar" + O ÚNICO LINK do e-mail: a página-capa (`<site.publishedUrl>/proposta.html`), que mostra antes e depois lado a lado. Se a capa não existir, linkar a página nova direto (`site.publishedUrl`).
 - **Parágrafo 4**: CTA — abrir no celular também, responder com a impressão.
 - **Assinatura**: nome, apresentação e WhatsApp do config (assinatura completa humaniza e reduz suspeita).
 
-## Lead dos EUA (`pais='US'`)
+## Lead dos EUA (`country='US'`)
 
-Se o lead tem `pais='US'`, o e-mail inteiro sai em INGLÊS americano natural — pensado em inglês, não traduzido do português (evite construções e cordialidades que soam "traduzidas"). Todos os mesmos princípios valem: rapport específico, dor sem ofensa, prova antes do pedido, zero preço, curto. O assunto também em inglês e ≤ 60 caracteres (ex.: `Made something for [Business Name]` ou `Quick question about your website`). Se algum valor aparecer, é em dólar (US$) — mas a regra "zero preço" continua: valor só na conversa. A assinatura mantém os dados do contratante do config (nome, apresentação, contato). Lead BR segue em português normalmente.
+Se o lead tem `country='US'`, o e-mail inteiro sai em INGLÊS americano natural — pensado em inglês, não traduzido do português (evite construções e cordialidades que soam "traduzidas"). Todos os mesmos princípios valem: rapport específico, dor sem ofensa, prova antes do pedido, zero preço, curto. O assunto também em inglês e ≤ 60 caracteres (ex.: `Made something for [Business Name]` ou `Quick question about your website`). Se algum valor aparecer, é em dólar (US$) — mas a regra "zero preço" continua: valor só na conversa. A assinatura mantém os dados do contratante do config (nome, apresentação, contato). Lead BR segue em português normalmente.
 
 ## Checklist anti-spam (BLOQUEANTE — rodar antes de criar o rascunho)
 
@@ -35,8 +35,8 @@ Revise o e-mail pronto contra CADA item; se falhar em qualquer um, reescreva ant
 
 - [ ] **1 link só** (a página-capa). Dois links no máximo se incluir o site antigo — nunca mais que isso.
 - [ ] **Sem encurtador de URL** (bit.ly e afins = spam na certa). O link é o domínio real, com `https://`.
-- [ ] **Link como âncora HTML com texto visível limpo.** O Gmail embrulha TODO link em um redirect próprio (`google.com/url?q=...`) ao salvar — não dá pra impedir, e em corpo de texto puro o embrulho fica VISÍVEL, o que parece golpe. Por isso o rascunho é criado com corpo HTML e o link como âncora: `<a href="https://[dominio]/[pastaBase]/[slug]/proposta.html">https://[dominio]/[pastaBase]/[slug]/proposta.html</a>` — texto visível = a URL limpa montada a partir do config (nunca copiada de outro e-mail). O redirect do Google fica só no href invisível, como em qualquer e-mail do Gmail. Depois de criar, confira o rascunho: o texto visível deve começar em `https://[dominio do config]`.
-- [ ] **Domínio limpo e humano.** Se o domínio do config for um subdomínio técnico/temporário (cheio de números, tipo `nome1783367206076.1711244.meusitehostgator.com.br`), PARE antes de enviar qualquer proposta: link assim parece golpe e mata a confiança que a capa constrói. Oriente o usuário a ativar o domínio próprio (grátis no plano da HostGator: cPanel → Domains, ou registro em registro.br) e atualizar o campo `dominio` nas Configurações do dashboard. Proposta só sai com domínio apresentável.
+- [ ] **Link como âncora HTML com texto visível limpo.** O Gmail embrulha TODO link em um redirect próprio (`google.com/url?q=...`) ao salvar — não dá pra impedir, e em corpo de texto puro o embrulho fica VISÍVEL, o que parece golpe. Por isso o rascunho é criado com corpo HTML e o link como âncora: `<a href="<site.publishedUrl>/proposta.html"><site.publishedUrl>/proposta.html</a>` — texto visível = a URL limpa lida do campo `site.publishedUrl` da API (`GET /api/leads/by-slug/:slug`), nunca copiada de outro e-mail nem remontada à mão. O redirect do Google fica só no href invisível, como em qualquer e-mail do Gmail. Depois de criar, confira o rascunho: o texto visível deve começar em `https://` e bater com o `publishedUrl` do lead.
+- [ ] **Domínio limpo e humano.** Se o `publishedUrl` do lead for um subdomínio técnico/temporário (cheio de números, tipo `nome1783367206076.1711244.meusitehostgator.com.br`), PARE antes de enviar qualquer proposta: link assim parece golpe e mata a confiança que a capa constrói. Oriente o usuário a ativar o domínio próprio (grátis no plano da HostGator: cPanel → Domains, ou registro em registro.br) e atualizar o domínio nas Configurações do painel (`PUT /api/config`, chave `hosting`/`markets`), republicando o site depois. Proposta só sai com domínio apresentável. A API também barra isso na publicação (`400 Recusado: "<url>" é domínio técnico/temporário.` e `400 Recusado: "<url>" não é https.`), mas a checagem aqui continua: quem monta o e-mail é quem responde pelo link.
 - [ ] **Sem palavras-gatilho**: grátis, promoção, imperdível, oferta, desconto, clique aqui, 100%, garantido, urgente.
 - [ ] **Sem CAIXA ALTA no assunto, sem "!!", sem emoji** no assunto.
 - [ ] **Texto simples** — corpo HTML minimalista (só parágrafos e a âncora do link; zero cores, botões, imagens ou anexos) (anexo de desconhecido aumenta score de spam E medo de abrir; a capa no link substitui o preview).
@@ -52,8 +52,20 @@ Revise o e-mail pronto contra CADA item; se falhar em qualquer um, reescreva ant
 
 ## Página-capa (o que o cliente vê ao clicar)
 
-O link do e-mail leva à página-capa gerada no `/publicar` (template em `references/capa-proposta-template.html`): nome do cliente no topo, antes/depois lado a lado e a assinatura do usuário. Ela existe para dar credibilidade ao clique — o cliente vê o próprio negócio, não um link estranho. Exigências: servida em `https://`, personalizada com dados reais, sem pedido de dado pessoal nenhum.
+O link do e-mail leva à página-capa gerada no `/publicar` (template em `references/capa-proposta-template.html`): nome do cliente no topo, antes/depois lado a lado e a assinatura do usuário. Ela existe para dar credibilidade ao clique — o cliente vê o próprio negócio, não um link estranho. Exigências: servida em `https://`, personalizada com dados reais, sem pedido de dado pessoal nenhum. A URL base é sempre o `site.publishedUrl` que a API devolve para o lead — nunca uma URL remontada a partir de domínio + pasta.
+
+## Onde o estado mora
+
+Nada disso é gravado em arquivo local. O estado vive na API do app (credenciais em `~/.prospector/api.json`, escritas pelo `/setup`):
+
+- **Criar a proposta**: `POST /api/proposals` `{ "leadId", "channel": "email" }` — nasce `draft`, sempre.
+- **Marcar como enviada**: `PATCH /api/proposals/:id` `{ "status": "sent", "sentAt", "subject", "bodyHtml", "threadId", "messageId" }`. Só depois que o e-mail realmente saiu — `sentAt` é a âncora da janela de follow-up.
+- **Mover o lead**: `POST /api/leads/:id/status` `{ "status": "proposta" }`. Exige site publicado; `422` com `A proposta precisa de um site publicado para linkar.` significa publicar antes.
+- **Registrar a resposta**: `PATCH /api/proposals/:id` `{ "status": "replied", "repliedAt", "replySummary" }` — a API move o lead para `respondeu` quando a transição é válida e devolve `leadStatusWarning` quando não é.
+- **Registrar o follow-up**: `POST /api/proposals/:id/followup`. `409` = o lead já teve o dele; é a regra, não uma falha.
+
+Ressalva atual: `subject`, `bodyHtml`, `threadId` e `messageId` são aceitos no corpo do PATCH mas ainda **não são gravados** pela API (descartados em silêncio, voltam `null`). Mande mesmo assim — quando a API passar a persistir, o `/respostas` já usa o `threadId`.
 
 ## Depois do envio
 
-Registrar no banco/`leads.md` (status + data) e no dashboard. As respostas são verificadas pelo comando `/respostas` (Gmail via conector) — sugira ao usuário agendar a verificação diária. Follow-up pelo `/followup` após 3+ dias úteis sem resposta (1 único follow-up por lead: curto, gentil, "conseguiu ver a página?").
+As respostas são verificadas pelo comando `/respostas` (Gmail via conector) — sugira ao usuário agendar a verificação diária. Follow-up pelo `/followup` quando `GET /api/proposals/pending-followup` listar o lead: o limiar de dias é do servidor (`app_config.followup.days`, padrão 4), não do plugin. 1 único follow-up por lead, para sempre: curto, gentil, "conseguiu ver a página?".

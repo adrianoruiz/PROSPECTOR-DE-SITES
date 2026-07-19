@@ -1,172 +1,271 @@
 ---
 name: dashboard-leads
-description: Esta skill deve ser usada para criar e ATUALIZAR o dashboard de leads — o painel de controle local (SQLite + página web) onde o usuário administra prospecções, sites, publicações e propostas. Acione sempre que qualquer comando do plugin mudar dados de leads (/prospectar, /redesenhar, /publicar, /proposta), ou quando o usuário disser "dashboard", "painel", "meus leads", "controle de clientes", "banco de dados de leads".
+description: Esta skill é o MAPA MENTAL do sistema — o modelo de dados, os status e suas transições, a regra do slug, as fórmulas financeiras e a semântica da cobertura. Acione sempre que precisar entender ou explicar o estado do funil, antes de qualquer comando do plugin escrever na API (/prospectar, /redesenhar, /publicar, /proposta, /contrato, /respostas, /followup), ou quando o usuário disser "dashboard", "painel", "meus leads", "controle de clientes", "banco de dados de leads".
 ---
 
-# Dashboard de leads (SQLite + página local)
+# Modelo de dados e regras de negócio
 
-Arquitetura na RAIZ da pasta conectada:
+Esta skill **não executa mais nada**. Ela descreve o sistema para que os comandos saibam o que
+significa cada campo e cada transição. Quem guarda o estado é a **API HTTP do app Nuxt**; quem
+mostra é o **painel do próprio app** (`NUXT_PUBLIC_APP_URL/painel`).
 
-- **`prospector.db`** — banco SQLite, a FONTE DA VERDADE dos leads.
-- **`dashboard-server.py` + `iniciar-dashboard.bat` (Windows) / `iniciar-dashboard.command` (Mac)`** — mini-servidor local (Python padrão, sem dependências). O usuário dá duplo clique no .bat → abre `http://localhost:8765` com o painel completo: editar, excluir e arrastar cards salvam direto no banco.
-- **`dashboard.html`** — a página do painel (gerada do template). Servida pelo servidor (modo banco) ou aberta por duplo clique (modo arquivo: só leitura + edições presas ao navegador). O badge no topo indica o modo.
+Contrato canônico e completo da API: `docs/api-reference.md` do repositório do app. Em qualquer
+divergência, **a referência da API vence esta skill**.
 
-## Setup (uma vez, no /setup ou no primeiro uso)
+## Para onde foi cada peça antiga
 
-1. Copie `references/dashboard-server.py` e `references/iniciar-dashboard.bat` desta skill para a raiz da pasta conectada.
-2. Crie o `prospector.db` com o schema abaixo (via python3/sqlite3 no bash).
-3. Gere o `dashboard.html` a partir de `references/dashboard-template.html` substituindo `__DADOS__` pelo snapshot JSON.
-4. Diga ao usuário: "duplo clique em `iniciar-dashboard.bat` abre o painel com o banco conectado" (requer Python instalado no Windows — se não tiver, o dashboard.html funciona no modo arquivo).
+| Peça antiga (não existe mais) | Onde está agora |
+|---|---|
+| `prospector.db` (SQLite) + blocos `python3 - <<EOF import sqlite3` | Postgres do app, atrás da API HTTP. O plugin só fala por `curl`. |
+| `dashboard.html` / `dashboard-template.html` / `__DADOS__` | Telas do app (`/painel`, `/painel/pipeline`, `/painel/clientes`, …). Não há mais snapshot para regenerar. |
+| `dashboard-server.py`, `iniciar-dashboard.bat`, `iniciar-dashboard.command` | O servidor é o app Nuxt. O usuário abre `NUXT_PUBLIC_APP_URL/painel` no navegador. |
+| `comparar.html` / `comparador-template.html` | Tela `/painel/comparador`. |
+| `sites/[slug]/[slug].html` e `[slug]-editor.html` no disco | Tabela `site_versions` (HTML versionado) + página `/painel/sites/[slug]` (editor). |
+| `prospector-config.json` | Tabela `app_config` via `GET/PUT /api/config`. Segredos (FTP, senhas) ficam no `.env` do app e **nunca** trafegam pela API. |
+| `leads.md` como fonte de verdade | Nada. Pode existir como relatório legível **gerado**, nunca como algo que se lê para decidir estado. |
+| `fila-publicacao.txt`, `publicar-agora.*`, `instalar-publicador.*`, launchd/Task Scheduler | Continuam existindo **apenas** para o upload FTP em si. O estado da publicação é da API. |
+| Regra do slug executada em Python no plugin | Executada pelo servidor, no `POST /api/leads`. O plugin **lê** o slug. |
+| `/api/diagnostico` do servidor Python | `GET /api/diagnostics` do app (nomes de tipo diferentes — ver abaixo). |
 
-## Schema do banco
+## Como se lê o estado
 
-```sql
-CREATE TABLE IF NOT EXISTS leads(
-  slug TEXT PRIMARY KEY, nome TEXT, nicho TEXT, cidade TEXT, nota REAL, avaliacoes INTEGER,
-  email TEXT, telefone TEXT, whatsapp TEXT, siteAntigo TEXT, motivo TEXT,
-  status TEXT DEFAULT 'novo', urlNova TEXT, dataProposta TEXT, valor REAL, obs TEXT,
-  contratoStatus TEXT DEFAULT 'pendente', contratoEm TEXT, manutencao REAL, pago INTEGER DEFAULT 0,
-  docCliente TEXT, endCliente TEXT, pais TEXT DEFAULT 'BR',
-  atualizado TEXT DEFAULT (datetime('now','localtime')));
+Credenciais em `~/.prospector/api.json` (permissão 600), escritas uma vez pelo `/setup`:
+
+```bash
+API=$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.prospector/api.json')));print(d['baseUrl'])")
+TOKEN=$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.prospector/api.json')));print(d['token'])")
+curl -sS -H "Authorization: Bearer $TOKEN" "$API/api/leads"
 ```
 
-Status: `novo | redesenhado | publicado | proposta | respondeu | fechado | descartado`. `slug` é a chave.
+Sem esse arquivo, o comando **para** e manda rodar `/setup`. Não adivinhe URL, não caia para
+banco local. O token nunca aparece em output, log, chat ou comando ecoado.
 
-`pais` é `BR` ou `US`. O `/prospectar` grava o país do lead conforme a cidade da rodada. Leads US têm `valor` e `manutencao` em DÓLAR (USD) — nunca some com valores BR.
+Toda rota `/api/**` exige o Bearer. A única rota pública é `GET /p/:slug` (a prévia que vai no
+e-mail). Toda listagem devolve o envelope `{ total, items }` — nunca um array cru — e query
+string vazia (`?status=`) significa "sem filtro", não erro.
 
-## Como gerar o slug
+## As tabelas e o que cada uma significa
 
-O slug é a chave que amarra banco, pasta `sites/[slug]/`, rota `/api/leads/<slug>` e destino do deploy `public_html/[pastaBase]/[slug]/`. Esta skill é a DONA da regra — os outros comandos seguem daqui.
+**`leads`** — o negócio prospectado. É a raiz de tudo; apagar um lead apaga em CASCADE o site,
+todas as versões, todas as propostas e o contrato.
+Campos: `id` (uuid), `slug` (único, imutável), `name`, `niche`, `city`, `state`,
+`country` (`BR`|`US`), `rating`, `reviewsCount`, `email`, `phone`, `whatsapp`, `oldSiteUrl`,
+`reason` (por que qualificou), `status`, `notes`, `clientDoc` (CPF/CNPJ), `clientAddress`,
+`createdAt`, `updatedAt`.
 
-**O slug é gerado UMA vez, no `/prospectar`, a partir do nome COMPLETO do lead, e nunca mais muda.** Todos os outros comandos (`/redesenhar`, `/publicar`, `/proposta`, `/editor`, `/contrato`) **LEEM o slug do banco** (`SELECT slug FROM leads WHERE nome=...`) ou do `leads.md` — jamais recalculam a partir do nome, jamais inventam versão curta.
+**`sites`** — um site por lead. `slug` espelha o do lead. Guarda `briefing` (jsonb),
+`currentVersionId`, `isPublished`, `publishedUrl`, `publishedAt`. Não existe "despublicar":
+`isPublished` só vai para `true`.
 
-**O nome da pasta `sites/[slug]/` é exatamente o slug do banco, sem encurtar.** Se o slug é `vitaly-centro-integrado-de-saude`, a pasta é `sites/vitaly-centro-integrado-de-saude/` — nunca `sites/vitaly/`. Encurtar quebra o `UPDATE leads SET urlNova=... WHERE slug=?`, e o lead fica travado em `novo` com o painel zerado.
+**`site_versions`** — o HTML versionado, append-only na prática. `version` (inteiro crescente),
+`source` (`redesign` | `editor` | `import`), `note`, `html`. Apontar `currentVersionId` para
+outra versão muda o conteúdo de `/p/:slug` **imediatamente**, sem republicar — é assim que o
+rollback funciona. As listagens omitem o `html` de propósito (pode ter centenas de KB).
 
-Regra determinística:
+**`proposals`** — várias por lead. `channel` (`email`|`whatsapp`), `status`
+(`draft` → `sent` → `replied`|`no_reply`), `sentAt`, `amountCents`, `currency`, `repliedAt`,
+`replySummary`, `followupSentAt`. As colunas `subject`, `bodyHtml`, `threadId`, `messageId`
+existem mas **hoje saem sempre `null`** — nenhuma rota escreve nelas.
+Regra dura: **um follow-up por lead, para sempre** — criar uma segunda proposta não compra um
+segundo follow-up (`409` com a data do follow-up anterior).
 
-1. minúsculas; remover acentos (NFD + descartar combining marks);
-2. trocar tudo que não é `[a-z0-9]` por `-`, colapsar `-` repetidos, remover `-` das pontas;
-3. remover do FIM os sufixos genéricos de razão social: `ltda`, `me`, `epp`, `eireli`, `sa`, `s-a` (repetir enquanto houver);
-4. **não** remover palavras do meio — nada de encurtar "Vitaly Centro Integrado de Saúde" para `vitaly`;
-5. limite de 40 caracteres, cortando na última fronteira de `-` para não terminar picado;
-6. se colidir com o slug de OUTRO negócio já no banco, sufixar `-2`, `-3`...
+**`contracts`** — **um por lead** (unique em `lead_id`). `status`
+(`pendente` | `enviado` | `assinado`), `sentAt`, `signedAt`, `amountCents`, `retainerCents`
+(manutenção mensal), `currency`, `paid`, `paidAt`, `documentHtml`, `documentDocx`, `clientDoc`,
+`clientAddress`. Fechar o lead com `amountCents` cria o contrato `pendente` automaticamente —
+**fechado ≠ assinado ≠ pago**, são três eixos independentes.
 
-```python
-import re, unicodedata
+**`coverage_rounds`** — histórico de prospecção, **append-only** (ver seção própria).
 
-GENERICOS = ('ltda', 'me', 'epp', 'eireli', 'sa', 's-a')
+**`app_config`** — 7 chaves de topo: `signature`, `prospecting`, `sending`, `markets`, `hosting`,
+`pricing`, `followup`. `PUT /api/config` faz upsert **por chave de topo e substitui a seção
+inteira** (não há merge profundo): para mudar um campo, releia com `GET` e reenvie a seção
+completa. É uma allowlist estrita — campo fora do schema dá `400 Corpo inválido`. Segredo não
+entra aqui; `GET /api/config` devolve apenas booleanos em `secrets`
+(`hostgatorConfigured`, `hostgatorPasswordSet`).
 
-def slugify(nome, existentes=()):
-    """Slug canônico do lead. Determinístico: mesmo nome -> mesmo slug.
-    `existentes` = slugs já no banco (SELECT slug FROM leads)."""
-    s = unicodedata.normalize('NFD', nome or '')
-    s = ''.join(ch for ch in s if not unicodedata.combining(ch)).lower()
-    s = re.sub(r'[^a-z0-9]+', '-', s).strip('-')
-    mudou = True
-    while mudou:                       # tira sufixos de razão social do FIM
-        mudou = False
-        for g in GENERICOS:
-            if s.endswith('-' + g):
-                s, mudou = s[:-(len(g) + 1)], True
-    if len(s) > 40:                    # corta na última fronteira de '-'
-        corte = s[:40]
-        s = corte[:corte.rfind('-')] if '-' in corte else corte
-    s = s.strip('-') or 'lead'
-    base, n = s, 2
-    while s in existentes:             # colisão com outro negócio
-        s, n = '%s-%d' % (base, n), n + 1
-    return s
-```
+**`api_keys`** — só o `sha256` do token é guardado. O plaintext aparece **uma única vez**, na
+criação. Revogar não apaga a linha, grava `revoked_at`.
+
+## Dinheiro
+
+Sempre **centavos inteiros** (`amountCents`, `retainerCents`, `perPageCents`) mais `currency`
+explícito. **R$ 1.500,00 = `150000`.** Nunca mande float.
+`BR → BRL`, `US → USD` (default quando `currency` é omitido).
+**BRL e USD nunca são somados**: todo agregado devolve `{ "BRL": ..., "USD": ... }` separado.
+
+## Status do lead e transições
+
+`novo | redesenhado | publicado | proposta | respondeu | fechado | descartado`.
+
+O funil ordenado é `novo`(0) → `redesenhado`(1) → `publicado`(2) → `proposta`(3) →
+`respondeu`(4) → `fechado`(5). `descartado` não é estágio, é saída.
+
+Mudar status é **só** por `POST /api/leads/:id/status` `{ "status": "...", "amountCents": ... }`:
+
+- **Avanço é sempre de um degrau.** Pular etapa → `422 Não dá para pular etapas: de "<from>" o
+  próximo passo é "<próximo>".` Levar um lead de `novo` a `fechado` são 5 chamadas.
+- **Voltar é livre**, sem pré-condição.
+- **`descartado` aceita-se de qualquer lugar**, sem pré-condição.
+- **Resgatar de `descartado`** é o único salto permitido — e por isso cobra as pré-condições
+  **acumuladas** do destino: para `proposta`/`respondeu`/`fechado` exige site publicado; para
+  `fechado` exige `amountCents`. Resgate para `novo`/`redesenhado`/`publicado` é livre.
+- **`→ proposta` exige um site com `isPublished = true`** (`422 A proposta precisa de um site
+  publicado para linkar.`).
+- **`→ fechado` exige `amountCents` no corpo** (`422 Fechar exige o valor cobrado.`), mesmo que
+  já exista contrato com valor.
+- `from === to` → `422 O lead já está em "<to>".`
+- **Não existe `force`** aqui. Consertar lead travado é degrau por degrau.
+
+### Movimentos que acontecem sozinhos (fora da máquina de estados)
+
+| Ação | Efeito |
+|---|---|
+| `POST /api/sites` | lead em `novo` → `redesenhado` |
+| `POST /api/sites/:slug/publish` | lead em `redesenhado` → `publicado` (em outro status, não move) |
+| `POST /api/leads/:id/status` → `fechado` com `amountCents` | cria/atualiza o contrato `pendente` |
+| `POST /api/leads/:id/status` → `proposta` | cria proposta `draft`/`email`/`sentAt: null`, só se o lead tiver zero propostas |
+| `PATCH /api/proposals/:id` com `status: "replied"` | move o lead `proposta` → `respondeu`, se a transição for legal (senão devolve `leadStatusWarning`) |
+| `POST /api/contracts`, `POST /api/proposals`, `POST /api/coverage/rounds` | **nenhum** efeito no lead |
+
+Consequência prática: **criar contrato não fecha o lead** e **marcar contrato como assinado não
+move o lead**. São coisas diferentes.
+
+## Status auxiliares
+
+- **Proposta**: nasce sempre `draft` (mandar `"status":"sent"` no POST é ignorado em silêncio).
+  Vira `sent` por `PATCH /api/proposals/:id`. `sentAt` é a âncora da janela de follow-up: não
+  pode ser futuro nem anterior à criação da proposta.
+- **Contrato**: `pendente` → `enviado` → `assinado`. `paid` é um eixo à parte de `status`.
+
+## A regra do slug (agora executada pela API)
+
+O slug amarra lead, site, a URL pública `/p/:slug` e o destino do deploy. **Ele nasce no
+servidor**, no `POST /api/leads`, derivado do `name`, e **nunca muda**: `PATCH /api/leads/:id`
+rejeita a chave `slug` com `400`, e nenhuma rota reescreve `sites.slug`.
+
+**Todo comando LÊ o slug da API** (`GET /api/leads?q=...` ou o `slug` que veio na criação) e
+usa `GET /api/leads/by-slug/:slug` para o resto. Jamais recalcule o slug a partir do nome,
+jamais invente uma versão curta — o servidor pode ter aplicado desempate (`psykhe-2`) ou corte
+de 40 caracteres que você não reproduziria.
+
+A regra que o servidor aplica, para você **entender** o resultado (não para reimplementar):
+
+1. minúsculas, acentos removidos (NFD + descarte de combining marks);
+2. tudo que não é `[a-z0-9]` vira `-`, `-` repetidos colapsam, pontas aparadas;
+3. sufixos societários removidos do FIM, empilhados: `ltda`, `me`, `epp`, `eireli`, `sa`, `s-a`;
+4. **nada é removido do meio** — não se encurta "Vitaly Centro Integrado de Saúde" para `vitaly`;
+5. corte em 40 caracteres na última fronteira de `-`; fallback `lead`;
+6. colisão com outro lead ganha sufixo `-2`, `-3`, …
 
 | Nome do lead | Slug |
 |---|---|
-| Vitaly Centro Integrado de Saúde | `vitaly-centro-integrado-de-saude` |
+| Clínica Vida Nova | `clinica-vida-nova` |
 | WB Contabilidade Blumenau | `wb-contabilidade-blumenau` |
 | Império Contabilidade (Grupo Império) | `imperio-contabilidade-grupo-imperio` |
-| Dr. Juliano Canello Capra | `dr-juliano-canello-capra` |
-| Psykhé | `psykhe` |
+| Psykhé | `psykhe` (segundo lead homônimo: `psykhe-2`) |
 | Móveis Planejados & Cia Ltda | `moveis-planejados-cia` |
 
-```sql
-CREATE TABLE IF NOT EXISTS cobertura(
-  id INTEGER PRIMARY KEY AUTOINCREMENT, cidade TEXT NOT NULL, estado TEXT, pais TEXT DEFAULT 'BR',
-  nicho TEXT NOT NULL, rodadaEm TEXT, avaliados INTEGER DEFAULT 0, qualificados INTEGER DEFAULT 0,
-  descartados INTEGER DEFAULT 0, obs TEXT,
-  atualizado TEXT DEFAULT (datetime('now','localtime')));
-CREATE UNIQUE INDEX IF NOT EXISTS idx_cobertura_combo
-  ON cobertura(lower(cidade),lower(ifnull(estado,'')),lower(nicho));
-```
+> Leads antigos podem ter slugs mais curtos que essa regra produziria hoje (`vitaly-centro-integrado`,
+> `dr-juliano-capra`). Isso é normal e **não deve ser corrigido**: o slug é imutável e é o que
+> está publicado. Mais uma razão para sempre ler, nunca calcular.
 
-`cobertura` é o histórico de onde já se prospectou — uma linha por combinação **cidade + estado + nicho** (o índice único ignora maiúsculas e trata estado vazio igual a nulo). Registrar a mesma combinação de novo **soma** nos contadores e atualiza `rodadaEm`; nunca duplica a linha. `rodadaEm` é `YYYY-MM-DD`; `pais` é `BR` ou `US`.
+## Cobertura — append-only
 
-## Endpoints do servidor
+`coverage_rounds` guarda **uma linha por rodada**, não por combinação. Registrar de novo a mesma
+cidade × nicho **insere outra linha**; nada é somado na escrita nem sobrescrito. Quem soma é a
+leitura: `GET /api/coverage` agrega em células cidade × nicho e devolve `evaluated`, `qualified`,
+`discarded`, `qualificationRate` (fração 0–1), `lastRun` e `rounds` (quantas rodadas).
 
-| Método | Rota | O que faz |
-|---|---|---|
-| GET | `/api/leads` | lista os leads |
-| POST | `/api/leads` | insere/substitui lead |
-| PUT | `/api/leads/<slug>` | edita campos do lead |
-| DELETE | `/api/leads/<slug>` | remove o lead |
-| GET | `/api/cobertura` | lista as rodadas registradas |
-| POST | `/api/cobertura` | cria a combinação ou **soma** numa existente (400 se faltar `cidade` ou `nicho`) |
-| PUT | `/api/cobertura/<id>` | edita campos (409 se a edição colidir com outra combinação) |
-| DELETE | `/api/cobertura/<id>` | remove a rodada |
-| GET/PUT | `/api/config` | dados do contratante e conexão HostGator |
-| GET | `/api/diagnostico` | compara banco × disco e lista inconsistências de slug/status (ver abaixo) |
+- Chaves de agregação são case-insensitive: `cityKey = lower(trim(city))|lower(trim(state))`,
+  `nicheKey = lower(trim(niche))`. O rótulo exibido é o da rodada mais recente.
+- **Invariante**: `evaluated >= qualified + discarded`, senão
+  `400 evaluated (<n>) precisa ser >= qualified + discarded (<n>)`. No PATCH a checagem roda
+  sobre o merge da linha com o patch.
+- Registrar rodada **não cria leads**, e criar lead **não atualiza contador de rodada**. Não há
+  vínculo entre rodada e leads gerados.
+- Para saber se uma combinação já foi trabalhada antes de prospectar: `GET /api/coverage` e
+  procure a célula pelo `cityKey`/`nicheKey`; ou `GET /api/coverage/rounds?city=&state=&niche=`.
+- Correção de rodada: `PATCH /api/coverage/rounds/:id`. Exclusão: `DELETE`.
 
-### `/api/diagnostico` — rede de segurança do slug
+## Fórmulas financeiras (`GET /api/finance`) — as corrigidas
 
-Devolve `{"problemas": [...], "total": N}`. Cada problema traz `tipo`, `slug`, `detalhe` e `sugestao` (texto). Os tipos:
+Todo valor sai como `{ "BRL": <centavos>, "USD": <centavos> }`.
 
-- `sem-url` — status `redesenhado`/`publicado` mas `urlNova` vazio.
-- `url-sem-arquivo` — `urlNova` preenchido, mas a página local `sites/[slug]/[slug].html` não existe.
-- `pasta-orfa` — pasta em `sites/` sem lead correspondente no banco (o sintoma clássico de slug encurtado na mão).
-- `url-status-novo` — `urlNova` preenchido mas status ainda `novo`.
+| Campo | Fórmula |
+|---|---|
+| `recebido` | soma de `amountCents` dos contratos com `paid = true` |
+| `aReceber` | soma de `amountCents` dos contratos com `paid = false` |
+| `mrrPotencial` | soma de `retainerCents > 0` de **todos** os contratos |
+| `mrrAtivo` | soma de `retainerCents > 0` **somente** de contratos `status = 'assinado'` |
+| `projecao12m` | **`aReceber + mrrAtivo × 12`** |
+| `potencial` | para cada lead **não** `descartado`, soma o `perPageCents` da moeda do país |
+| `leadsAtivos` | contagem de leads não-`descartado`, por país (`{ BR, US }`) |
 
-A Visão Geral do painel mostra um aviso discreto no topo quando há problemas. Sem servidor (modo arquivo) o endpoint não existe e o aviso simplesmente não aparece.
+Duas correções que valem repetir, porque o painel antigo errava as duas:
 
-## Como os comandos atualizam (SEMPRE os 2 passos)
+1. **`projecao12m` NÃO inclui `recebido`.** Caixa já recebido não é projeção — somá-lo inflava o
+   número contando o mesmo dinheiro duas vezes.
+2. **MRR ativo é só contrato assinado.** Manutenção prometida em contrato `pendente` ou `enviado`
+   é `mrrPotencial`, não receita recorrente.
 
-1. **Upsert no banco** via bash (exemplo):
-```bash
-python3 - <<'EOF'
-import sqlite3
-c = sqlite3.connect('CAMINHO/prospector.db')
-c.execute("INSERT INTO leads (slug,nome,status,pais,...) VALUES (?,?,?,?,...) ON CONFLICT(slug) DO UPDATE SET status=excluded.status, atualizado=datetime('now','localtime')", (...))
-c.commit()
-EOF
-```
-   - `/prospectar` → insere leads (`novo`) e descartados (`descartado`, motivo em `obs`). NUNCA sobrescreva um lead cujo status já avançou.
-   - `/redesenhar` → `status='redesenhado'` · `/publicar` → `status='publicado'`, `urlNova` · `/proposta` → `status='proposta'`, `dataProposta`.
-   - Usuário conta que respondeu/fechou → `status='respondeu'|'fechado'`, `valor` (+ `manutencao` se houver mensalidade).
-   - `/contrato` → `contratoStatus='enviado'` + `contratoEm`. Cliente assinou → `contratoStatus='assinado'`. Pagamento recebido → `pago=1`.
-   - `/prospectar` também registra a **cobertura** ao fim da rodada (ver abaixo).
-2. **Regenerar o snapshot**: leia todos os leads e toda a cobertura do banco e regrave `dashboard.html` do template com o JSON embutido atualizado (`{"atualizado": "...", "leads": [...], "cobertura": [...]}`) — é o fallback para quem abre sem servidor.
+`perPageCents` vem de `app_config.pricing.perPageCents`, default `{ BRL: 70000, USD: 50000 }`.
+Filtro opcional `?country=BR|US` filtra contratos e leads pelo país do lead.
 
-### Registrar cobertura (ao fim de cada `/prospectar`)
+## Diagnóstico — a rede de segurança
 
-```bash
-python3 - <<'EOF'
-import sqlite3
-c = sqlite3.connect('CAMINHO/prospector.db')
-cid, uf, nicho = 'Blumenau', 'SC', 'dentista'
-r = c.execute("SELECT id FROM cobertura WHERE lower(cidade)=lower(?) AND lower(ifnull(estado,''))=lower(?) AND lower(nicho)=lower(?)", (cid, uf, nicho)).fetchone()
-if r:  # mesma combinação: SOMA nos contadores e atualiza a data
-    c.execute("UPDATE cobertura SET avaliados=avaliados+?, qualificados=qualificados+?, descartados=descartados+?, rodadaEm=?, atualizado=datetime('now','localtime') WHERE id=?", (25, 8, 17, '2026-07-19', r[0]))
-else:
-    c.execute("INSERT INTO cobertura (cidade,estado,pais,nicho,rodadaEm,avaliados,qualificados,descartados) VALUES (?,?,?,?,?,?,?,?)", (cid, uf, 'BR', nicho, '2026-07-19', 25, 8, 17))
-c.commit()
-EOF
-```
+`GET /api/diagnostics` devolve `{ total, problems[] }` com `type`, `subject`, `detail`, `hint`.
+`subject` é o **slug do lead** — exceto em `rodada_com_contagem_impossivel`, onde é o UUID da rodada.
 
-Antes de buscar, consulte a mesma tabela para avisar o usuário se a combinação já foi rodada.
+| `type` | Detecta |
+|---|---|
+| `lead_publicado_sem_versao` | lead em `publicado` sem site, sem `isPublished`, ou sem versão corrente |
+| `site_com_versao_lead_novo` | site já tem versão, mas o lead continua em `novo` |
+| `lead_proposta_sem_proposta` | lead em `proposta` sem nenhuma linha em `proposals` |
+| `rodada_com_contagem_impossivel` | rodada com `evaluated < qualified + discarded` |
+| `lead_fechado_sem_contrato` | lead em `fechado` sem contrato |
 
-Se o banco não existir ainda (usuário antigo), crie-o e importe os leads do snapshot embutido no `dashboard.html` atual antes do upsert. Respeite edições do usuário: antes de regravar um lead, leia o registro atual do banco.
+## Qualificação na criação do lead
+
+`POST /api/leads` com `status: "novo"` roda a qualificação e devolve `422` com `data.reason` na
+primeira reprovação: nota < 4,7 (`Nota abaixo de 4,7.`); menos de 40 avaliações
+(`Menos de 40 avaliações.`); sem `oldSiteUrl` (`Sem site ativo para redesenhar.`); lead BR sem
+`email` (`Lead BR sem e-mail público.`); lead US sem nenhum canal de contato
+(`Lead US sem nenhum canal de contato viável.`).
+`force: true` cria assim mesmo e anota `[cadastro forçado] <motivo>` em `notes`.
+`status: "descartado"` na criação **pula a qualificação inteira** — registrar o que não passou é
+legítimo e é o que alimenta a taxa de qualificação da cobertura.
+
+## Erros — vocabulário comum
+
+| Status | Significa |
+|---|---|
+| `400` | corpo/query inválidos (zod, com `data` de `z.treeifyError()`), ou violação de regra simples |
+| `401` | `Não autenticado` — chave inválida ou revogada. **Pare e mande rodar `/setup`.** |
+| `404` | não encontrado — **inclui `:id` que não é UUID** (não é `400`) |
+| `409` | conflito de estado: contrato duplicado, follow-up repetido, corrida de slug/versão |
+| `422` | guarda de domínio: lead não qualifica, transição proibida (`data.reason`) |
+
+A mensagem legível está sempre em `statusMessage`. **Mostre-a ao usuário** em vez de engolir, e
+nunca declare sucesso sem ter visto `200`/`201`.
 
 ## O que o painel faz sozinho (não reimplementar)
 
-Kanban drag & drop, edição em modal, exclusão, busca, paginação automática, funil, follow-ups (proposta 4+ dias), receita fechada/potencial, vista Contratos (status pendente/enviado/assinado + link do documento + pago) e vista Financeiro (recebido, a receber, MRR de manutenções, projeção 12 meses) — tudo no template. O plugin só mantém o BANCO correto e o snapshot em dia.
+Kanban com drag & drop, edição em modal, exclusão, busca, paginação, funil, follow-ups pendentes,
+receita fechada/potencial, tela Contratos (status + documento + pago), tela Financeiro (recebido,
+a receber, MRR ativo e potencial, projeção 12 meses), tela Comparador, editor de site em
+`/painel/sites/[slug]`, matriz de Cobertura e o aviso de diagnóstico. O plugin só mantém os
+**dados** corretos via API — não gera HTML de painel, não serve página, não escreve snapshot.
 
-O painel tem uma **chave global de país** (todos / BR / US) no topo que filtra todas as abas de uma vez. As moedas ficam sempre separadas (R$ × US$) no Financeiro e na Visão geral — valores BR e US nunca são somados. Há ainda um **toggle de idioma PT/EN**.
+Chave global de país (todos / BR / US) e toggle de idioma PT/EN também são do app. As moedas
+ficam sempre separadas (R$ × US$).
 
-**Aba Cobertura**: matriz cidade × nicho (célula verde = já prospectado, com data e nº de qualificados no hover; célula cinza = campo aberto), resumo no topo (cidades trabalhadas, nichos, combinações cobertas, taxa média de qualificação), filtro por país (BR/US/todos), formulário "registrar rodada" e tabela editável inline com exclusão. Funciona nos dois modos: com o servidor grava via `/api/cobertura`; sem servidor lê o snapshot embutido e guarda as edições no `localStorage` (`prospector_cob`), igual às outras abas.
+## O que esta skill proíbe
+
+- Ler ou escrever `prospector.db`, `prospector-config.json`, `leads.md` ou qualquer arquivo local
+  para decidir estado.
+- Recalcular slug, encurtar nome de pasta, ou assumir slug a partir do nome do negócio.
+- Somar BRL com USD.
+- Mandar dinheiro em float.
+- Incluir `recebido` na projeção de 12 meses, ou contar manutenção não assinada como MRR ativo.
+- Tratar `409`/`422` como falha de rede e tentar de novo em silêncio.

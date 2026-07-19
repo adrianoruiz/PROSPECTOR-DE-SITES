@@ -13,10 +13,10 @@ Criar uma NOVA VERSÃO da página do cliente — não uma página nova. O client
 2. **Fotos e logo originais são OBRIGATÓRIOS no site novo.** Toda foto utilizável do site existente (profissional, consultório, logo) deve constar na página nova, pelas URLs originais (colete via `img.currentSrc` no navegador, rolando a página inteira para vencer lazy-load). O cliente precisa se reconhecer na hora.
 3. **Identidade preservada.** Manter logo, paleta de cores e fotos do cliente. Se a paleta original for fraca (ex.: cores puras saturadas), refinar os tons — nunca trocar a família de cores.
 4. **Mais completo que o original.** O site novo deve ser MUITO mais profissional e bem estruturado. Se o original tem poucas seções, CRIE as seções relevantes que faltam — desde que preenchidas só com informação real: prova social (nota + avaliações reais do Google), "como funciona o atendimento" (se dedutível do original), localização com mapa, horários (do perfil do Maps), FAQ com dúvidas respondíveis pelo conteúdo real. Seção que exigiria inventar fato = não criar.
-5. **Arquivo único.** `sites/[slug]/[slug].html` autocontido — `[slug]` é o slug EXATO do lead no `prospector.db`, lido do banco e nunca encurtado nem reinventado (regra na skill `dashboard-leads`, seção "Como gerar o slug"). Pasta fora do slug = lead travado no painel. Autocontido: CSS inline no `<head>`, sem build, sem dependências além de Google Fonts.
+5. **Arquivo único.** A página é UM documento HTML autocontido: CSS inline no `<head>`, sem build, sem dependências além de Google Fonts. Ela não é gravada em disco — vai no corpo da requisição para a API (`POST /api/sites` ou `POST /api/sites/:slug/versions`) e vira uma versão do site. O `[slug]` que endereça tudo (`/painel/sites/[slug]`, `/p/[slug]`) é o slug EXATO do lead na API, lido de `GET /api/leads` e nunca encurtado nem reinventado — o servidor gera e ele é imutável.
 6. **Responsividade TOTAL (inegociável).** A página será vista no celular do cliente E dentro da moldura da página-capa (~1000-1500px). Ela deve ser perfeita em QUALQUER largura: 360, 375, 768, 1024, 1280 e 1440px — sem rolagem horizontal, sem texto vazando, sem imagem esticada, sem seção quebrada em nenhum desses pontos. Usar grid/flex fluidos, `clamp()` para tipografia e breakpoints testados um a um. Página que quebra em alguma largura NÃO é entregue.
-7. **Editor sempre.** Todo redesign gera junto o `sites/[slug]/[slug]-editor.html` (camada de edição de `references/editor-visual.md`) — nunca entregar página sem a versão editável.
-8. **Comparador sempre.** Todo lote de redesign termina com `comparar.html` na raiz da pasta conectada, gerado a partir de `references/comparador-template.html` (substituir `__CLIENTES__` pelo array JSON; mesclar com clientes já existentes). A entrega padrão de cada cliente são 3 arquivos: página + editor + aba no comparador.
+7. **Editor sempre.** Toda página entregue é editável — mas a camada de edição não é mais gerada por você. Ela é a página `/painel/sites/[slug]` do app, que edita e salva criando uma versão nova (`source: "editor"`), com rollback para qualquer versão anterior. Gravar o redesign pela API já deixa o editor disponível; a entrega precisa apontar essa URL. (O script antigo, injetado em `[slug]-editor.html`, está preservado em `references/editor-visual.md` como referência histórica.)
+8. **Comparador sempre.** Todo lote de redesign termina com o antes/depois disponível na tela `/painel/comparador` do app, que lê `oldSiteUrl` do lead e o HTML da versão corrente do site — nada a gerar, mas a entrega precisa apontar essa URL. A entrega padrão de cada cliente são 3 coisas: a versão gravada na API + o editor em `/painel/sites/[slug]` + o cliente aparecendo no comparador. (O template antigo `references/comparador-template.html` fica como referência histórica.)
 
 ## Estrutura da página (adaptar à profissão)
 
@@ -62,8 +62,13 @@ A página pronta deve parecer feita por um estúdio de design — teste honesto:
 - [ ] Título e meta description preenchidos com nome + especialidade + cidade
 - [ ] Comparação com o original: todo conteúdo importante do site antigo está presente
 - [ ] Logo e fotos ORIGINAIS do cliente presentes na página nova
-- [ ] `[slug]-editor.html` gerado e `comparar.html` atualizado
+- [ ] Página gravada na API (`POST /api/sites` com `briefing`, ou `POST /api/sites/:slug/versions` se o site já existir) e confirmada em `GET /api/sites` com `currentVersion` não-nulo
 
 ## Editor visual e comparador
 
-A camada de edição visual (para gerar `[slug]-editor.html`) está em `references/editor-visual.md` — injetar o script exatamente como documentado lá. O comparador antes/depois está em `references/comparador-template.html` — substituir `__CLIENTES__` pelo array JSON e salvar como `comparar.html` na raiz da pasta conectada (mesclando com clientes existentes).
+Os dois viraram tela do app Prospector — não há mais arquivo a gerar:
+
+- **Editor visual**: `/painel/sites/[slug]`. Edita texto e imagem na prévia, salva como versão nova (`source: "editor"`), faz rollback. O script da camada de edição antiga, que era injetado em `[slug]-editor.html`, continua em `references/editor-visual.md` **como referência histórica** da lógica de edição/exportação.
+- **Comparador antes/depois**: `/painel/comparador`. Lê `oldSiteUrl` do lead e o HTML da versão corrente. O template antigo `references/comparador-template.html` continua no repositório **como referência histórica** — não é mais copiado nem preenchido.
+
+Onde o HTML vive: tabela `site_versions`, uma linha por versão, servida em `/p/[slug]` depois de `/publicar`. Nada de HTML solto em disco.
