@@ -17,7 +17,7 @@ def ler_config():
 PORTA = 8765
 CAMPOS = ['slug','nome','nicho','cidade','nota','avaliacoes','email','telefone','whatsapp',
           'siteAntigo','motivo','status','urlNova','dataProposta','valor','obs',
-          'contratoStatus','contratoEm','manutencao','pago','docCliente','endCliente']
+          'contratoStatus','contratoEm','manutencao','pago','docCliente','endCliente','pais']
 CAMPOS_COB = ['cidade','estado','pais','nicho','rodadaEm','avaliados','qualificados','descartados','obs']
 CONTADORES = ['avaliados','qualificados','descartados']
 
@@ -28,8 +28,9 @@ def conexao():
         email TEXT, telefone TEXT, whatsapp TEXT, siteAntigo TEXT, motivo TEXT,
         status TEXT DEFAULT 'novo', urlNova TEXT, dataProposta TEXT, valor REAL, obs TEXT,
         contratoStatus TEXT DEFAULT 'pendente', contratoEm TEXT, manutencao REAL, pago INTEGER DEFAULT 0,
+        pais TEXT DEFAULT 'BR',
         atualizado TEXT DEFAULT (datetime('now','localtime')))''')
-    for col, tipo in [('contratoStatus',"TEXT DEFAULT 'pendente'"),('contratoEm','TEXT'),('manutencao','REAL'),('pago','INTEGER DEFAULT 0'),('docCliente','TEXT'),('endCliente','TEXT')]:
+    for col, tipo in [('contratoStatus',"TEXT DEFAULT 'pendente'"),('contratoEm','TEXT'),('manutencao','REAL'),('pago','INTEGER DEFAULT 0'),('docCliente','TEXT'),('endCliente','TEXT'),('pais',"TEXT DEFAULT 'BR'")]:
         try: c.execute('ALTER TABLE leads ADD COLUMN %s %s' % (col, tipo))
         except sqlite3.OperationalError: pass
     c.execute('''CREATE TABLE IF NOT EXISTS cobertura(
@@ -66,9 +67,12 @@ def diagnosticar():
         if status in ('redesenhado', 'publicado') and not url:
             anota('sem-url', slug, '%s está como "%s" mas não tem urlNova.' % (nome, status),
                   'Publique com /publicar ou preencha a URL em ✎ dados.')
-        if url and not os.path.exists(os.path.join(PASTA, 'sites', slug, slug + '.html')):
-            anota('url-sem-arquivo', slug, '%s tem urlNova mas falta sites/%s/%s.html no disco.' % (nome, slug, slug),
-                  'A pasta do redesign provavelmente foi criada com outro nome — renomeie-a para "%s" ou rode /redesenhar de novo.' % slug)
+        # confere o caminho que está REALMENTE gravado em urlNova (relativo à pasta conectada),
+        # não um caminho deduzido do slug — senão pasta com nome legado vira falso positivo
+        if url and not url.startswith(('http://', 'https://')):
+            if not os.path.exists(os.path.join(PASTA, url.lstrip('/'))):
+                anota('url-sem-arquivo', slug, '%s tem urlNova apontando para "%s", que não existe no disco.' % (nome, url),
+                      'Corrija a URL em ✎ dados ou rode /redesenhar de novo. O padrão é sites/%s/%s.html.' % (slug, slug))
         if url and status == 'novo':
             anota('url-status-novo', slug, '%s já tem página publicada mas continua com status "novo".' % nome,
                   'Arraste o card para "Publicado" no pipeline (ou peça ao Claude para atualizar o status).')

@@ -133,6 +133,12 @@ select.mini{border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-
 .dica-drag{color:var(--muted);font-size:11.5px;margin:0 0 10px}
 .hidden{display:none}
 .acoes a.del{color:#B0483B}
+/* "novo" = o redesign que fizemos; destacado para separar do "antigo" do cliente */
+.acoes a.novo{background:var(--accent);color:#fff;border-color:var(--accent)}
+.acoes a.novo:hover{filter:brightness(1.08)}
+/* nome do cliente abre o site atual dele */
+.nm-link{color:inherit;text-decoration:none;border-bottom:1px dotted var(--line)}
+.nm-link:hover{color:var(--accent-2);border-bottom-color:currentColor}
 .modo{font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px}
 .modo.db{background:var(--ok-soft);color:var(--ok)}
 .modo.file{background:var(--warn-soft);color:var(--warn)}
@@ -256,8 +262,8 @@ function nav(){
 }
 function pillStatus(s){return '<span class="pill" style="background:color-mix(in srgb,'+CORES[s]+' 18%,white);color:'+CORES[s]+'">'+NOMES[s]+'</span>'}
 function acoes(l){var a=[];
- if(l.siteAntigo)a.push('<a href="'+l.siteAntigo+'" target="_blank">antigo</a>');
- if(l.slug&&['redesenhado','publicado','proposta','respondeu','fechado'].indexOf(l.status)>=0){a.push('<a href="sites/'+l.slug+'/'+l.slug+'.html" target="_blank">página</a>');a.push('<a href="sites/'+l.slug+'/'+l.slug+'-editor.html" target="_blank">editar site</a>')}
+ if(l.siteAntigo)a.push('<a href="'+l.siteAntigo+'" target="_blank" title="site que o cliente tem hoje">antigo</a>');
+ if(l.slug&&['redesenhado','publicado','proposta','respondeu','fechado'].indexOf(l.status)>=0){a.push('<a class="novo" href="sites/'+l.slug+'/'+l.slug+'.html" target="_blank" title="o redesign que fizemos">novo</a>');a.push('<a href="sites/'+l.slug+'/'+l.slug+'-editor.html" target="_blank">editar site</a>')}
  if(l.urlNova)a.push('<a href="'+l.urlNova+'" target="_blank">no ar ↗</a>');
  if(l.whatsapp)a.push('<a href="https://wa.me/'+l.whatsapp+'" target="_blank">whatsapp</a>');
  if(l.email&&l.email.indexOf('@')>0)a.push('<a href="mailto:'+l.email+'">e-mail</a>');
@@ -292,7 +298,7 @@ function vPipeline(){var por={};fil().forEach(function(l){(por[l.status]=por[l.s
 function vClientes(){var ls=fil().slice().sort(function(a,b){var x=a[sortCol]||'',y=b[sortCol]||'';return(x<y?-1:x>y?1:0)*(sortAsc?1:-1)});
  var pp=pagSize();var total=ls.length,paginas=Math.max(1,Math.ceil(total/pp));if(pag>paginas)pag=paginas;
  var ini=(pag-1)*pp,fim=Math.min(ini+pp,total);ls=ls.slice(ini,fim);
- return '<div class="painel tab"><div class="twrap"><table><thead><tr>'+[['nome','Cliente'],['nota','Nota'],['avaliacoes','Aval.'],['cidade','Cidade'],['status','Status'],['valor','Valor'],['x','Contato / páginas']].map(function(c){return '<th onclick="ordenar(\''+c[0]+'\')">'+c[1]+(sortCol===c[0]?(sortAsc?' ↑':' ↓'):'')+'</th>'}).join('')+'</tr></thead><tbody>'+ls.map(function(l){return '<tr><td><b>'+l.nome+'</b><div style="color:var(--muted);font-size:11.5px">'+(l.email||'sem e-mail')+'</div></td><td>'+(l.nota?'★ '+l.nota:'—')+'</td><td>'+(l.avaliacoes||'—')+'</td><td>'+(l.cidade||'—')+'</td><td>'+pillStatus(l.status)+'</td><td>'+(l.valor?'R$ '+l.valor.toLocaleString('pt-BR'):'—')+'</td><td>'+acoes(l)+'</td></tr>'}).join('')+'</tbody></table></div><div class="pagin"><span class="info">Mostrando '+(total?ini+1:0)+'–'+fim+' de '+total+' clientes</span><select onchange="mudaPorPag(this.value)"><option value="auto"'+(porPag==='auto'?' selected':'')+'>Auto ('+pp+' / página)</option>'+[10,25,50].map(function(n){return '<option value="'+n+'"'+(porPag===n?' selected':'')+'>'+n+' / página</option>'}).join('')+'</select><button onclick="irPag('+(pag-1)+')"'+(pag<=1?' disabled':'')+'>‹</button>'+Array.apply(null,{length:paginas}).map(function(_,i){return '<button class="'+(pag===i+1?'on':'')+'" onclick="irPag('+(i+1)+')">'+(i+1)+'</button>'}).join('')+'<button onclick="irPag('+(pag+1)+')"'+(pag>=paginas?' disabled':'')+'>›</button></div></div>'}
+ return '<div class="painel tab"><div class="twrap"><table><thead><tr>'+[['nome','Cliente'],['nota','Nota'],['avaliacoes','Aval.'],['cidade','Cidade'],['status','Status'],['valor','Valor'],['x','Contato / páginas']].map(function(c){return '<th onclick="ordenar(\''+c[0]+'\')">'+c[1]+(sortCol===c[0]?(sortAsc?' ↑':' ↓'):'')+'</th>'}).join('')+'</tr></thead><tbody>'+ls.map(function(l){return '<tr><td><b>'+(l.siteAntigo?'<a class="nm-link" href="'+l.siteAntigo+'" target="_blank" title="abrir o site atual do cliente">'+l.nome+' ↗</a>':l.nome)+'</b><div style="color:var(--muted);font-size:11.5px">'+(l.email||'sem e-mail')+'</div></td><td>'+(l.nota?'★ '+l.nota:'—')+'</td><td>'+(l.avaliacoes||'—')+'</td><td>'+(l.cidade||'—')+'</td><td>'+pillStatus(l.status)+'</td><td>'+(l.valor?'R$ '+l.valor.toLocaleString('pt-BR'):'—')+'</td><td>'+acoes(l)+'</td></tr>'}).join('')+'</tbody></table></div><div class="pagin"><span class="info">Mostrando '+(total?ini+1:0)+'–'+fim+' de '+total+' clientes</span><select onchange="mudaPorPag(this.value)"><option value="auto"'+(porPag==='auto'?' selected':'')+'>Auto ('+pp+' / página)</option>'+[10,25,50].map(function(n){return '<option value="'+n+'"'+(porPag===n?' selected':'')+'>'+n+' / página</option>'}).join('')+'</select><button onclick="irPag('+(pag-1)+')"'+(pag<=1?' disabled':'')+'>‹</button>'+Array.apply(null,{length:paginas}).map(function(_,i){return '<button class="'+(pag===i+1?'on':'')+'" onclick="irPag('+(i+1)+')">'+(i+1)+'</button>'}).join('')+'<button onclick="irPag('+(pag+1)+')"'+(pag>=paginas?' disabled':'')+'>›</button></div></div>'}
 function irPag(n){pag=n;render()}
 function mudaPorPag(v){porPag=v==='auto'?'auto':parseInt(v);pag=1;render()}
 function vSites(){var ls=fil().filter(function(l){return['redesenhado','publicado','proposta','respondeu','fechado'].indexOf(l.status)>=0});

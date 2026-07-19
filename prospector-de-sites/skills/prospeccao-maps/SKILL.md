@@ -31,9 +31,13 @@ Qualifica como lead se o site (ativo) tiver 2 ou mais destes problemas:
 
 O motivo anotado deve ser objetivo e verificável — ele será citado na proposta. Ex.: "domínio redireciona para Google Sites gratuito, template básico, sem CTA de agendamento".
 
+## País do lead (BR × US)
+
+Identifique se a cidade buscada é do Brasil ou dos Estados Unidos e grave o campo `pais` no lead E na cobertura: cidade BR → `pais='BR'` (o default), cidade dos EUA → `pais='US'`. Esse campo é o que separa a operação depois — lead US recebe proposta e contrato em inglês, com valores em dólar; lead BR segue em português e real. Nunca deixe o país em branco numa cidade americana.
+
 ## Coleta por lead
 
-Nome, nota, nº de avaliações, telefone, WhatsApp, e-mail, URL do site, motivo.
+Nome, nota, nº de avaliações, telefone, WhatsApp, e-mail, URL do site, país (BR/US), motivo.
 
 **WHATSAPP: capture SEMPRE, separado do telefone.** Fontes, na ordem: botão/link de WhatsApp no site do lead (procure `wa.me/`, `api.whatsapp.com` ou ícone de WhatsApp — extraia o número do link); telefone celular do perfil do Maps (números com 9º dígito são celular no Brasil — assuma WhatsApp). Registre no formato internacional `55 + DDD + número` (ex.: `5511999990000`), pronto pra `wa.me`. O WhatsApp alimenta os botões do dashboard e o plano B de abordagem quando o e-mail não responde.
 

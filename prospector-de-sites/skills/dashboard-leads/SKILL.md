@@ -26,11 +26,13 @@ CREATE TABLE IF NOT EXISTS leads(
   email TEXT, telefone TEXT, whatsapp TEXT, siteAntigo TEXT, motivo TEXT,
   status TEXT DEFAULT 'novo', urlNova TEXT, dataProposta TEXT, valor REAL, obs TEXT,
   contratoStatus TEXT DEFAULT 'pendente', contratoEm TEXT, manutencao REAL, pago INTEGER DEFAULT 0,
-  docCliente TEXT, endCliente TEXT,
+  docCliente TEXT, endCliente TEXT, pais TEXT DEFAULT 'BR',
   atualizado TEXT DEFAULT (datetime('now','localtime')));
 ```
 
 Status: `novo | redesenhado | publicado | proposta | respondeu | fechado | descartado`. `slug` é a chave.
+
+`pais` é `BR` ou `US`. O `/prospectar` grava o país do lead conforme a cidade da rodada. Leads US têm `valor` e `manutencao` em DÓLAR (USD) — nunca some com valores BR.
 
 ## Como gerar o slug
 
@@ -130,7 +132,7 @@ A Visão Geral do painel mostra um aviso discreto no topo quando há problemas. 
 python3 - <<'EOF'
 import sqlite3
 c = sqlite3.connect('CAMINHO/prospector.db')
-c.execute("INSERT INTO leads (slug,nome,status,...) VALUES (?,?,?,...) ON CONFLICT(slug) DO UPDATE SET status=excluded.status, atualizado=datetime('now','localtime')", (...))
+c.execute("INSERT INTO leads (slug,nome,status,pais,...) VALUES (?,?,?,?,...) ON CONFLICT(slug) DO UPDATE SET status=excluded.status, atualizado=datetime('now','localtime')", (...))
 c.commit()
 EOF
 ```
@@ -164,5 +166,7 @@ Se o banco não existir ainda (usuário antigo), crie-o e importe os leads do sn
 ## O que o painel faz sozinho (não reimplementar)
 
 Kanban drag & drop, edição em modal, exclusão, busca, paginação automática, funil, follow-ups (proposta 4+ dias), receita fechada/potencial, vista Contratos (status pendente/enviado/assinado + link do documento + pago) e vista Financeiro (recebido, a receber, MRR de manutenções, projeção 12 meses) — tudo no template. O plugin só mantém o BANCO correto e o snapshot em dia.
+
+O painel tem uma **chave global de país** (todos / BR / US) no topo que filtra todas as abas de uma vez. As moedas ficam sempre separadas (R$ × US$) no Financeiro e na Visão geral — valores BR e US nunca são somados. Há ainda um **toggle de idioma PT/EN**.
 
 **Aba Cobertura**: matriz cidade × nicho (célula verde = já prospectado, com data e nº de qualificados no hover; célula cinza = campo aberto), resumo no topo (cidades trabalhadas, nichos, combinações cobertas, taxa média de qualificação), filtro por país (BR/US/todos), formulário "registrar rodada" e tabela editável inline com exclusão. Funciona nos dois modos: com o servidor grava via `/api/cobertura`; sem servidor lê o snapshot embutido e guarda as edições no `localStorage` (`prospector_cob`), igual às outras abas.

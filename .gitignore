@@ -1,0 +1,19 @@
+# artefatos de sessao/agente (nao fazem parte do plugin)
+.claude/
+.playwright-mcp/
+__pycache__/
+*.pyc
+
+# capturas de tela e arquivos soltos de teste
+*.png
+*.jpeg
+*.jpg
+
+# dados de trabalho do usuario (ficam na pasta conectada, nunca no repo)
+prospector.db
+prospector-config.json
+dashboard.html
+comparar.html
+leads.md
+sites/
+dados/
