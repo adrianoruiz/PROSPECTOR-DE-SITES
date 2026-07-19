@@ -25,6 +25,10 @@ O e-mail NÃO vende — ele desperta curiosidade e prova trabalho feito. O fecha
 - **Parágrafo 4**: CTA — abrir no celular também, responder com a impressão.
 - **Assinatura**: nome, apresentação e WhatsApp do config (assinatura completa humaniza e reduz suspeita).
 
+## Lead dos EUA (`pais='US'`)
+
+Se o lead tem `pais='US'`, o e-mail inteiro sai em INGLÊS americano natural — pensado em inglês, não traduzido do português (evite construções e cordialidades que soam "traduzidas"). Todos os mesmos princípios valem: rapport específico, dor sem ofensa, prova antes do pedido, zero preço, curto. O assunto também em inglês e ≤ 60 caracteres (ex.: `Made something for [Business Name]` ou `Quick question about your website`). Se algum valor aparecer, é em dólar (US$) — mas a regra "zero preço" continua: valor só na conversa. A assinatura mantém os dados do contratante do config (nome, apresentação, contato). Lead BR segue em português normalmente.
+
 ## Checklist anti-spam (BLOQUEANTE — rodar antes de criar o rascunho)
 
 Revise o e-mail pronto contra CADA item; se falhar em qualquer um, reescreva antes de criar o rascunho:

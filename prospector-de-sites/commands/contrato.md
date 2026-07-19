@@ -22,6 +22,7 @@ Quando o cliente devolver o contrato preenchido/assinado, salve o arquivo como `
 
 ## Regras
 
+- **Lead com `pais='US'`**: contrato redigido em inglês, com valores em dólar (US$). Os dados do prestador (contratante) seguem os do config. Lead BR segue em português e real, como sempre.
 - O contrato é MINUTA BASE: o rodapé do template contém o aviso de revisão jurídica — nunca o remova.
 - Valores, prazos e formas de pagamento vêm do usuário/banco — nunca invente.
 - Se o config não tiver os dados completos do prestador, colete uma vez e salve no `prospector-config.json` (campo `contratante`).

@@ -142,6 +142,15 @@ select.mini{border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-
 .modo{font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px}
 .modo.db{background:var(--ok-soft);color:var(--ok)}
 .modo.file{background:var(--warn-soft);color:var(--warn)}
+.sw{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--white)}
+.sw button{border:0;background:none;padding:7px 12px;font-size:11.5px;font-weight:800;cursor:pointer;color:var(--muted);font-family:var(--sans);border-right:1px solid var(--line)}
+.sw button:last-child{border-right:0}
+.sw button.on{background:var(--ink);color:#fff}
+.sw button.on.us{background:#4A6591}
+.sw button.on.br{background:var(--ok)}
+.stat .n.duplo{font-size:19px;line-height:1.5}
+.tag.us{background:#E4E9F2;color:#4A6591}
+.tag.br{background:var(--ok-soft);color:var(--ok)}
 #modal-bg{position:fixed;inset:0;background:#00000055;display:none;align-items:center;justify-content:center;z-index:50}
 #modal-bg.aberto{display:flex}
 #modal{background:var(--white);border-radius:16px;padding:22px;width:460px;max-width:92vw;max-height:88vh;overflow-y:auto}
@@ -189,29 +198,74 @@ select.mini{border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-
   <div class="side-foot">Alimentado pelo plugin <b>prospector-de-sites</b>. Cliente respondeu ou fechou? Conta pro Claude que ele atualiza aqui.</div>
 </aside>
 <main>
-  <div class="topbar"><h1 id="titulo">Visão geral</h1><span class="upd" id="upd"></span><span class="modo file" id="modo" title="Abra pelo iniciar-dashboard.bat para salvar no banco">modo arquivo</span><button id="limpar-ov" style="display:none;border:1px solid var(--line);background:var(--white);color:var(--muted);font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:var(--sans)" onclick="if(confirm('Descartar as edições feitas neste navegador e voltar aos dados do plugin?')){localStorage.removeItem('prospector_ov');localStorage.removeItem('prospector_cob');location.reload()}">limpar edições locais</button><input class="busca" id="busca" placeholder="Buscar cliente, nicho, cidade..."></div>
+  <div class="topbar"><h1 id="titulo">Visão geral</h1><span class="upd" id="upd"></span><span class="modo file" id="modo" title="Abra pelo iniciar-dashboard.bat para salvar no banco">modo arquivo</span><span class="sw" id="sw-pais" title="Operação: Brasil, Estados Unidos ou tudo junto"></span><span class="sw" id="sw-lang" title="Idioma do painel / Panel language"></span><button id="limpar-ov" style="display:none;border:1px solid var(--line);background:var(--white);color:var(--muted);font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:var(--sans)" onclick="if(confirm('Descartar as edições feitas neste navegador e voltar aos dados do plugin?')){localStorage.removeItem('prospector_ov');localStorage.removeItem('prospector_cob');location.reload()}">limpar edições locais</button><input class="busca" id="busca" placeholder="Buscar cliente, nicho, cidade..."></div>
   <div id="view"></div>
 </main>
 <div id="doc-bg"><div class="doc-bar"><b id="doc-titulo">Contrato</b><span class="sp"></span><button class="imp" onclick="printDoc()">🖨 Imprimir / Salvar PDF</button><button class="fech" onclick="fecharDoc()">Fechar ✕</button></div><iframe id="doc-frame"></iframe></div>
 <div id="modal-bg" onclick="if(event.target===this)fecharEdit()"><div id="modal">
 <h2 id="m-titulo">Editar lead</h2>
-<label>Nome</label><input id="m-nome">
-<div class="mrow"><div><label>E-mail</label><input id="m-email"></div><div><label>Telefone</label><input id="m-telefone"></div></div>
-<div class="mrow"><div><label>WhatsApp (55DDDnúmero)</label><input id="m-whatsapp"></div><div><label>Cidade</label><input id="m-cidade"></div></div>
-<div class="mrow"><div><label>Nicho</label><input id="m-nicho"></div><div><label>Status</label><select id="m-status"></select></div></div>
-<div class="mrow"><div><label>Valor (R$)</label><input id="m-valor" type="number" step="50"></div><div><label>Data da proposta</label><input id="m-dataProposta" type="date"></div></div>
-<div class="mrow"><div><label>Manutenção mensal (R$)</label><input id="m-manutencao" type="number" step="10"></div><div><label>Pagamento recebido?</label><select id="m-pago"><option value="0">Não</option><option value="1">Sim</option></select></div></div>
-<div class="mrow"><div><label>Contrato</label><select id="m-contratoStatus"><option value="pendente">Pendente</option><option value="enviado">Enviado</option><option value="assinado">Assinado</option></select></div><div><label>Data do contrato</label><input id="m-contratoEm" type="date"></div></div>
-<div class="mrow"><div><label>CPF/CNPJ do cliente</label><input id="m-docCliente" placeholder="para o contrato"></div><div><label>Endereço do cliente</label><input id="m-endCliente" placeholder="rua, nº — para o contrato"></div></div>
-<label>URL publicada</label><input id="m-urlNova">
-<label>Observações</label><textarea id="m-obs" rows="2"></textarea>
-<div class="mbot"><button class="cancelar" onclick="fecharEdit()">Cancelar</button><button class="salvar" onclick="salvarEdit()">Salvar</button></div>
+<label data-t="Nome">Nome</label><input id="m-nome">
+<div class="mrow"><div><label data-t="E-mail">E-mail</label><input id="m-email"></div><div><label data-t="Telefone">Telefone</label><input id="m-telefone"></div></div>
+<div class="mrow"><div><label data-t="WhatsApp (55DDDnúmero)">WhatsApp (55DDDnúmero)</label><input id="m-whatsapp"></div><div><label data-t="Cidade">Cidade</label><input id="m-cidade"></div></div>
+<div class="mrow"><div><label data-t="Nicho">Nicho</label><input id="m-nicho"></div><div><label data-t="Status">Status</label><select id="m-status"></select></div></div>
+<div class="mrow"><div><label data-t="País / moeda">País / moeda</label><select id="m-pais"><option value="BR">BR — R$ (real)</option><option value="US">US — US$ (dólar)</option></select></div><div><label data-t="Data da proposta">Data da proposta</label><input id="m-dataProposta" type="date"></div></div>
+<div class="mrow"><div><label data-t="Valor">Valor</label><input id="m-valor" type="number" step="50"></div><div><label data-t="Manutenção mensal">Manutenção mensal</label><input id="m-manutencao" type="number" step="10"></div></div>
+<div class="mrow"><div><label data-t="Pagamento recebido?">Pagamento recebido?</label><select id="m-pago"><option value="0" data-t="Não">Não</option><option value="1" data-t="Sim">Sim</option></select></div><div><label data-t="Contrato">Contrato</label><select id="m-contratoStatus"><option value="pendente" data-t="Pendente">Pendente</option><option value="enviado" data-t="Enviado">Enviado</option><option value="assinado" data-t="Assinado">Assinado</option></select></div></div>
+<div class="mrow"><div><label data-t="Data do contrato">Data do contrato</label><input id="m-contratoEm" type="date"></div><div><label data-t="CPF/CNPJ do cliente">CPF/CNPJ do cliente</label><input id="m-docCliente" placeholder="para o contrato"></div></div>
+<label data-t="Endereço do cliente">Endereço do cliente</label><input id="m-endCliente" placeholder="rua, nº — para o contrato">
+<label data-t="URL publicada">URL publicada</label><input id="m-urlNova">
+<label data-t="Observações">Observações</label><textarea id="m-obs" rows="2"></textarea>
+<div class="mbot"><button class="cancelar" data-t="Cancelar" onclick="fecharEdit()">Cancelar</button><button class="salvar" data-t="Salvar" onclick="salvarEdit()">Salvar</button></div>
 </div></div>
 <script id="dados" type="application/json">__DADOS__</script>
 <script>
 var D=JSON.parse(document.getElementById('dados').textContent);
 var OV=JSON.parse(localStorage.getItem('prospector_ov')||'{}');
 var MODE='file';
+/* ---- operação BR × US + idioma do painel ---- */
+var PAIS=localStorage.getItem('prospector_pais')||'todos';
+var LANG=localStorage.getItem('prospector_lang')||'pt';
+function setPais(p){PAIS=p;localStorage.setItem('prospector_pais',p);pag=1;render()}
+function setLang(l){LANG=l;localStorage.setItem('prospector_lang',l);render()}
+var EN={
+'Visão geral':'Overview','Pipeline':'Pipeline','Clientes':'Clients','Sites':'Sites','Comparador':'Compare','Follow-ups':'Follow-ups','Cobertura':'Coverage','Contratos':'Contracts','Financeiro':'Finance','Configurações':'Settings',
+'Novo':'New','Redesenhado':'Redesigned','Publicado':'Published','Proposta enviada':'Proposal sent','Respondeu':'Replied','Fechado':'Closed','Descartado':'Discarded',
+'atualizado em':'updated','modo arquivo':'file mode','banco conectado':'database connected','limpar edições locais':'clear local edits','todos':'all',
+'Buscar cliente, nicho, cidade...':'Search client, niche, city...',
+'Leads ativos':'Active leads','Propostas na rua':'Proposals out','Follow-ups pendentes':'Pending follow-ups','Fechados':'Closed deals','Receita fechada':'Closed revenue','Potencial (R$700 · US$500 /página)':'Potential (R$700 · US$500 /page)',
+'Funil do pipeline':'Pipeline funnel','Follow-ups pendentes (4+ dias sem resposta)':'Pending follow-ups (4+ days without reply)','Nenhum follow-up pendente. 👌':'No pending follow-ups. 👌','proposta em':'proposal sent on','dias':'days','chamar no WhatsApp →':'ping on WhatsApp →',
+'Arraste um card para mudar o status — os automáticos (redesenhado, publicado, proposta) o plugin move sozinho; use o arrasto principalmente para <b>Respondeu</b> e <b>Fechado</b>.':'Drag a card to change status — the plugin moves the automatic ones (redesigned, published, proposal) by itself; drag mainly for <b>Replied</b> and <b>Closed</b>.',
+'solte aqui':'drop here','mês':'mo',
+'Cliente':'Client','Nota':'Rating','Aval.':'Reviews','Cidade':'City','Status':'Status','Valor':'Value','Contato / páginas':'Contact / pages','sem e-mail':'no email','Mostrando':'Showing','de':'of','clientes':'clients','/ página':'/ page',
+'antigo':'old','novo':'new','editar site':'edit site','no ar ↗':'live ↗','e-mail':'email','✎ dados':'✎ edit','✕ excluir':'✕ delete','Ver no ar ↗':'View live ↗','Ver página':'View page','Editar site':'Edit site','local':'local',
+'Nenhum site redesenhado ainda — rode /redesenhar.':'No redesigned sites yet — run /redesenhar.',
+'Sem sites redesenhados ainda — rode /redesenhar no Claude e o antes/depois aparece aqui.':'No redesigned sites yet — run /redesenhar in Claude and the before/after shows up here.',
+'Antes — site atual':'Before — current site','Depois — nova versão':'After — new version','abrir ↗':'open ↗','Sem URL do site antigo registrada.':'No URL recorded for the old site.',
+'Alguns sites antigos bloqueiam visualização embutida — se o lado "Antes" ficar em branco, use o link "abrir ↗".':'Some old sites block embedding — if the "Before" side is blank, use the "open ↗" link.',
+'Propostas aguardando follow-up':'Proposals awaiting follow-up','Nenhum follow-up pendente.':'No pending follow-ups.',
+'Cidades trabalhadas':'Cities covered','Nichos atacados':'Niches targeted','Combinações cobertas':'Combos covered','Taxa de qualificação':'Qualification rate','Matriz cidade × nicho':'City × niche matrix',
+'Nenhuma rodada registrada ainda — o /prospectar registra sozinho ao fim de cada varredura, ou use o formulário abaixo.':'No runs logged yet — /prospectar logs one automatically after each sweep, or use the form below.',
+'Célula verde = já prospectado (data + leads qualificados). Célula cinza = campo aberto.':'Green cell = already prospected (date + qualified leads). Gray cell = open field.',
+'campo aberto — ainda não prospectado':'open field — not prospected yet','livre':'open','sem data':'no date','qualificados de':'qualified out of','avaliados':'evaluated','leads':'leads',
+'Registrar rodada':'Log a run','Estado/UF':'State','Nicho':'Niche','Data da rodada':'Run date','Avaliados':'Evaluated','Qualificados':'Qualified','Descartados':'Discarded','Observações':'Notes','País':'Country','Registrar':'Log it',
+'Registrar a mesma cidade+estado+nicho de novo soma nos contadores e atualiza a data — nunca duplica a linha.':'Logging the same city+state+niche again adds to the counters and refreshes the date — it never duplicates the row.',
+'Rodadas registradas':'Logged runs','Rodada em':'Run date','Desc.':'Disc.','Taxa':'Rate','Obs':'Notes','Nenhuma rodada registrada para este país.':'No runs logged for this country.',
+'Manutenção':'Retainer','Data':'Date','Pago':'Paid','Ações':'Actions','peça /contrato ao Claude':'ask Claude for /contrato','👁 Ver contrato':'👁 View contract','⬇ Baixar .docx':'⬇ Download .docx','✓ Assinado':'✓ Signed',
+'Nenhum cliente fechado ainda. Quando fechar, arraste o card pra "Fechado" e peça ao Claude: /contrato [cliente].':'No closed clients yet. When one closes, drag the card to "Closed" and ask Claude: /contrato [client].',
+'pendente':'pending','enviado':'sent','assinado':'signed','Pendente':'Pending','Enviado':'Sent','Assinado':'Signed',
+'Recebido':'Received','A receber':'Outstanding','Manutenções (MRR)':'Retainers (MRR)','Projeção 12 meses':'12-month projection','Fechamentos':'Closed deals','Manutenção/mês':'Retainer/mo',
+'Sem fechamentos ainda — a projeção começa no primeiro card arrastado pra Fechado.':'No closed deals yet — the projection starts with the first card dragged to Closed.',
+'Como o financeiro se alimenta':'How finance feeds itself',
+'Valor e manutenção entram quando você fecha (drag no kanban ou ✎ dados). "Pago" você marca aqui com um clique. O contrato muda pra "enviado" quando o Claude gera via /contrato — e pra "assinado" quando você marcar.':'Value and retainer come in when you close (drag on the kanban or ✎ edit). "Paid" you tick right here. The contract flips to "sent" when Claude generates it via /contrato — and to "signed" when you mark it.',
+'Nome':'Name','Telefone':'Phone','WhatsApp (55DDDnúmero)':'WhatsApp (country+number)','País / moeda':'Country / currency','Data da proposta':'Proposal date','Manutenção mensal':'Monthly retainer','Pagamento recebido?':'Payment received?','Não':'No','Sim':'Yes','Contrato':'Contract','Data do contrato':'Contract date','CPF/CNPJ do cliente':'Client tax ID','Endereço do cliente':'Client address','URL publicada':'Published URL','Cancelar':'Cancel','Salvar':'Save','Editar lead':'Edit lead','Editar —':'Edit —','Excluir este lead do painel?':'Delete this lead from the panel?',
+'follow-up':'follow-up'};
+function T(s){return LANG==='en'&&EN[s]!==undefined?EN[s]:s}
+function moe(l){return (l.pais||'BR')==='US'?'US':'BR'}
+function fmtMoe(n,p){return p==='US'?'US$ '+(n||0).toLocaleString('en-US'):'R$ '+(n||0).toLocaleString('pt-BR')}
+function fmtLead(l,k){return fmtMoe(l[k],moe(l))}
+function somaMoe(arr,k){var s={BR:0,US:0};arr.forEach(function(l){s[moe(l)]+=(l[k]||0)});return s}
+function statMoe(s,suf){suf=suf||'';if(!s.BR&&!s.US)return fmtMoe(0,PAIS==='US'?'US':'BR')+suf;var a=[];if(s.BR)a.push(fmtMoe(s.BR,'BR')+suf);if(s.US)a.push(fmtMoe(s.US,'US')+suf);return a.join('<br>')}
+function tagPais(l){return PAIS==='todos'&&moe(l)==='US'?' <span class="tag us">US</span>':''}
 function aplicaOv(arr){return arr.filter(function(l){return !(OV[l.slug]&&OV[l.slug]._del)}).map(function(l){return Object.assign({},l,OV[l.slug]||{})})}
 var leads=aplicaOv(D.leads||[]);
 var COBOV=JSON.parse(localStorage.getItem('prospector_cob')||'null');
@@ -228,21 +282,22 @@ function pagSize(){if(porPag!=='auto')return porPag;var v=document.getElementByI
 document.getElementById('upd').textContent='atualizado em '+(D.atualizado||'—');
 function dias(iso){if(!iso)return 0;return Math.floor((Date.now()-new Date(iso+'T12:00:00'))/864e5)}
 function ativos(){return fil().filter(function(l){return l.status!=='descartado'})}
-function fil(){var b=busca.toLowerCase();return leads.filter(function(l){return !b||((l.nome||'')+(l.nicho||'')+(l.cidade||'')+(l.status||'')).toLowerCase().indexOf(b)>=0})}
+function fil(){var b=busca.toLowerCase();return leads.filter(function(l){return (PAIS==='todos'||(l.pais||'BR')===PAIS)&&(!b||((l.nome||'')+(l.nicho||'')+(l.cidade||'')+(l.status||'')).toLowerCase().indexOf(b)>=0)})}
 function recarrega(){return fetch('/api/leads',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){leads=j;render()})}
 function salvarOv(slug,ch){
  if(MODE==='db'){fetch('/api/leads/'+encodeURIComponent(slug),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ch)}).then(recarrega);return}
  OV[slug]=Object.assign(OV[slug]||{},ch);localStorage.setItem('prospector_ov',JSON.stringify(OV));leads=aplicaOv(D.leads||[]);render()}
-function deletar(slug){if(!confirm('Excluir este lead do painel?'))return;
+function deletar(slug){if(!confirm(T('Excluir este lead do painel?')))return;
  if(MODE==='db'){fetch('/api/leads/'+encodeURIComponent(slug),{method:'DELETE'}).then(recarrega);return}
  OV[slug]=Object.assign(OV[slug]||{},{_del:true});localStorage.setItem('prospector_ov',JSON.stringify(OV));leads=aplicaOv(D.leads||[]);render()}
 var CFG={};
 var editSlug=null;
 function abrirEdit(slug){editSlug=slug;var l=leads.filter(function(x){return x.slug===slug})[0]||{};
- document.getElementById('m-titulo').textContent='Editar — '+(l.nome||slug);
- document.getElementById('m-status').innerHTML=Object.keys(NOMES).map(function(st){return '<option value="'+st+'"'+(l.status===st?' selected':'')+'>'+NOMES[st]+'</option>'}).join('');
+ document.getElementById('m-titulo').textContent=T('Editar —')+' '+(l.nome||slug);
+ document.getElementById('m-status').innerHTML=Object.keys(NOMES).map(function(st){return '<option value="'+st+'"'+(l.status===st?' selected':'')+'>'+T(NOMES[st])+'</option>'}).join('');
  ['nome','email','telefone','whatsapp','cidade','nicho','valor','dataProposta','urlNova','obs','manutencao','contratoEm','docCliente','endCliente'].forEach(function(k){document.getElementById('m-'+k).value=l[k]==null?'':l[k]});
  document.getElementById('m-pago').value=l.pago?1:0;document.getElementById('m-contratoStatus').value=l.contratoStatus||'pendente';
+ document.getElementById('m-pais').value=(l.pais||'BR')==='US'?'US':'BR';
  document.getElementById('modal-bg').classList.add('aberto')}
 function fecharEdit(){document.getElementById('modal-bg').classList.remove('aberto');editSlug=null}
 function salvarEdit(){if(!editSlug)return;var ch={};
@@ -251,28 +306,36 @@ function salvarEdit(){if(!editSlug)return;var ch={};
  var v=document.getElementById('m-valor').value;ch.valor=v===''?null:parseFloat(v);
  var mn=document.getElementById('m-manutencao').value;ch.manutencao=mn===''?null:parseFloat(mn);
  ch.pago=parseInt(document.getElementById('m-pago').value);ch.contratoStatus=document.getElementById('m-contratoStatus').value;
+ ch.pais=document.getElementById('m-pais').value;
  var slug=editSlug;fecharEdit();salvarOv(slug,ch)}
 function setView(v){view=v;render()}
 function nav(){
  var fu=fil().filter(function(l){return l.status==='proposta'&&dias(l.dataProposta)>=4});
  var fechadosN=fil().filter(function(l){return l.status==='fechado'}).length;
- var itens=[['geral','Visão geral',null],['pipeline','Pipeline',ativos().length],['clientes','Clientes',fil().length],['sites','Sites',fil().filter(function(l){return['redesenhado','publicado','proposta','respondeu','fechado'].indexOf(l.status)>=0}).length],['comparador','Comparador',fil().filter(function(l){return l.slug&&['redesenhado','publicado','proposta','respondeu','fechado'].indexOf(l.status)>=0}).length],['followup','Follow-ups',fu.length],['cobertura','Cobertura',cob.length],['contratos','Contratos',fechadosN],['financeiro','Financeiro',null],['config','Configurações',null]];
- document.getElementById('nav').innerHTML=itens.map(function(i){return '<button class="'+(view===i[0]?'on':'')+'" onclick="setView(\''+i[0]+'\')">'+i[1]+(i[2]!==null?'<span class="qt">'+i[2]+'</span>':'')+'</button>'}).join('');
- document.getElementById('titulo').textContent=itens.filter(function(i){return i[0]===view})[0][1];
+ var itens=[['geral','Visão geral',null],['pipeline','Pipeline',ativos().length],['clientes','Clientes',fil().length],['sites','Sites',fil().filter(function(l){return['redesenhado','publicado','proposta','respondeu','fechado'].indexOf(l.status)>=0}).length],['comparador','Comparador',fil().filter(function(l){return l.slug&&['redesenhado','publicado','proposta','respondeu','fechado'].indexOf(l.status)>=0}).length],['followup','Follow-ups',fu.length],['cobertura','Cobertura',cobFil().length],['contratos','Contratos',fechadosN],['financeiro','Financeiro',null],['config','Configurações',null]];
+ document.getElementById('nav').innerHTML=itens.map(function(i){return '<button class="'+(view===i[0]?'on':'')+'" onclick="setView(\''+i[0]+'\')">'+T(i[1])+(i[2]!==null?'<span class="qt">'+i[2]+'</span>':'')+'</button>'}).join('');
+ document.getElementById('titulo').textContent=T(itens.filter(function(i){return i[0]===view})[0][1]);
+ document.getElementById('sw-pais').innerHTML=['todos','BR','US'].map(function(p){return '<button class="'+(PAIS===p?'on'+(p==='US'?' us':p==='BR'?' br':''):'')+'" onclick="setPais(\''+p+'\')">'+(p==='todos'?T('todos'):p==='BR'?'🇧🇷 BR':'🇺🇸 US')+'</button>'}).join('');
+ document.getElementById('sw-lang').innerHTML=['pt','en'].map(function(g){return '<button class="'+(LANG===g?'on':'')+'" onclick="setLang(\''+g+'\')">'+g.toUpperCase()+'</button>'}).join('');
+ var m=document.getElementById('modo');m.textContent=MODE==='db'?T('banco conectado'):T('modo arquivo');
+ document.getElementById('upd').textContent=T('atualizado em')+' '+(D.atualizado||'—');
+ document.getElementById('busca').placeholder=T('Buscar cliente, nicho, cidade...');
+ var lb=document.getElementById('limpar-ov');if(lb)lb.textContent=T('limpar edições locais');
+ var els=document.querySelectorAll('[data-t]');for(var i=0;i<els.length;i++)els[i].textContent=T(els[i].getAttribute('data-t'));
 }
-function pillStatus(s){return '<span class="pill" style="background:color-mix(in srgb,'+CORES[s]+' 18%,white);color:'+CORES[s]+'">'+NOMES[s]+'</span>'}
+function pillStatus(s){return '<span class="pill" style="background:color-mix(in srgb,'+CORES[s]+' 18%,white);color:'+CORES[s]+'">'+T(NOMES[s])+'</span>'}
 function acoes(l){var a=[];
- if(l.siteAntigo)a.push('<a href="'+l.siteAntigo+'" target="_blank" title="site que o cliente tem hoje">antigo</a>');
- if(l.slug&&['redesenhado','publicado','proposta','respondeu','fechado'].indexOf(l.status)>=0){a.push('<a class="novo" href="sites/'+l.slug+'/'+l.slug+'.html" target="_blank" title="o redesign que fizemos">novo</a>');a.push('<a href="sites/'+l.slug+'/'+l.slug+'-editor.html" target="_blank">editar site</a>')}
- if(l.urlNova)a.push('<a href="'+l.urlNova+'" target="_blank">no ar ↗</a>');
+ if(l.siteAntigo)a.push('<a href="'+l.siteAntigo+'" target="_blank" title="site que o cliente tem hoje">'+T('antigo')+'</a>');
+ if(l.slug&&['redesenhado','publicado','proposta','respondeu','fechado'].indexOf(l.status)>=0){a.push('<a class="novo" href="sites/'+l.slug+'/'+l.slug+'.html" target="_blank" title="o redesign que fizemos">'+T('novo')+'</a>');a.push('<a href="sites/'+l.slug+'/'+l.slug+'-editor.html" target="_blank">'+T('editar site')+'</a>')}
+ if(l.urlNova)a.push('<a href="'+l.urlNova+'" target="_blank">'+T('no ar ↗')+'</a>');
  if(l.whatsapp)a.push('<a href="https://wa.me/'+l.whatsapp+'" target="_blank">whatsapp</a>');
- if(l.email&&l.email.indexOf('@')>0)a.push('<a href="mailto:'+l.email+'">e-mail</a>');
- a.push('<a href="#" onclick="abrirEdit(\''+l.slug+'\');return false">✎ dados</a>');
- a.push('<a href="#" class="del" onclick="deletar(\''+l.slug+'\');return false">✕ excluir</a>');
+ if(l.email&&l.email.indexOf('@')>0)a.push('<a href="mailto:'+l.email+'">'+T('e-mail')+'</a>');
+ a.push('<a href="#" onclick="abrirEdit(\''+l.slug+'\');return false">'+T('✎ dados')+'</a>');
+ a.push('<a href="#" class="del" onclick="deletar(\''+l.slug+'\');return false">'+T('✕ excluir')+'</a>');
  return '<div class="acoes">'+a.join('')+'</div>'}
 
 function card(l){var f=l.status==='proposta'&&dias(l.dataProposta)>=4?'<span class="tag fup">follow-up '+dias(l.dataProposta)+'d</span>':'';
- return '<div class="card" draggable="true" ondragstart="dragIni(event,\''+l.slug+'\')" ondragend="dragFim(event)" style="--cor:'+CORES[l.status]+'"><div class="nm">'+l.nome+f+'</div><div class="mt">'+(l.nota?'★ '+l.nota+' ('+l.avaliacoes+')':'')+(l.cidade?' · '+l.cidade:'')+'</div>'+(l.motivo?'<div class="motivo">'+l.motivo+'</div>':'')+(l.obs?'<div class="mt">'+l.obs+'</div>':'')+(l.valor?'<div class="valor">R$ '+l.valor.toLocaleString('pt-BR')+(l.manutencao?' <span style="color:var(--muted);font-weight:600;font-size:11px">+ R$ '+l.manutencao.toLocaleString('pt-BR')+'/mês</span>':'')+'</div>':'')+acoes(l)+'</div>'}
+ return '<div class="card" draggable="true" ondragstart="dragIni(event,\''+l.slug+'\')" ondragend="dragFim(event)" style="--cor:'+CORES[l.status]+'"><div class="nm">'+l.nome+tagPais(l)+f+'</div><div class="mt">'+(l.nota?'★ '+l.nota+' ('+l.avaliacoes+')':'')+(l.cidade?' · '+l.cidade:'')+'</div>'+(l.motivo?'<div class="motivo">'+l.motivo+'</div>':'')+(l.obs?'<div class="mt">'+l.obs+'</div>':'')+(l.valor?'<div class="valor">'+fmtLead(l,'valor')+(l.manutencao?' <span style="color:var(--muted);font-weight:600;font-size:11px">+ '+fmtLead(l,'manutencao')+'/'+T('mês')+'</span>':'')+'</div>':'')+acoes(l)+'</div>'}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function avisoDiag(){
  if(!DIAG||!DIAG.total)return '';
@@ -285,56 +348,57 @@ function vGeral(){
  var props=ls.filter(function(l){return l.status==='proposta'});
  var fu=props.filter(function(l){return dias(l.dataProposta)>=4});
  var fech=ls.filter(function(l){return l.status==='fechado'});
- var receita=fech.reduce(function(a,l){return a+(l.valor||0)},0);
- var pot=at.length*700;
+ var receita=somaMoe(fech,'valor');
+ var atBR=at.filter(function(l){return moe(l)==='BR'}).length,atUS=at.length-atBR;
+ var pot={BR:atBR*700,US:atUS*500};
  var html=avisoDiag();
- html+='<div class="stats">'+[['Leads ativos',at.length,''],['Propostas na rua',props.length,''],['Follow-ups pendentes',fu.length,'ambar'],['Fechados',fech.length,'verde'],['Receita fechada','R$ '+receita.toLocaleString('pt-BR'),'verde'],['Potencial (R$700/página)','R$ '+pot.toLocaleString('pt-BR'),'laranja']].map(function(s){return '<div class="stat '+s[2]+'"><div class="n">'+s[1]+'</div><div class="l">'+s[0]+'</div></div>'}).join('')+'</div>';
+ html+='<div class="stats">'+[['Leads ativos',at.length,''],['Propostas na rua',props.length,''],['Follow-ups pendentes',fu.length,'ambar'],['Fechados',fech.length,'verde'],['Receita fechada',statMoe(receita),'verde'],['Potencial (R$700 · US$500 /página)',statMoe(pot),'laranja']].map(function(s){return '<div class="stat '+s[2]+'"><div class="n'+(String(s[1]).indexOf('<br>')>=0?' duplo':'')+'">'+s[1]+'</div><div class="l">'+T(s[0])+'</div></div>'}).join('')+'</div>';
  var max=Math.max.apply(null,ORDEM.map(function(s){return ls.filter(function(l){return l.status===s}).length}).concat([1]));
- html+='<div class="painel funil"><h2>Funil do pipeline</h2>'+ORDEM.map(function(s){var n=ls.filter(function(l){return l.status===s}).length;return '<div class="linha"><span>'+NOMES[s]+'</span><div class="barra"><div class="fill" style="width:'+(n/max*100)+'%;background:'+CORES[s]+'"></div></div><b>'+n+'</b></div>'}).join('')+'</div>';
- html+='<div class="painel"><h2>Follow-ups pendentes (4+ dias sem resposta)</h2>'+(fu.length?fu.map(function(l){return '<div class="fup-item"><b>'+l.nome+'</b><span class="dias">'+dias(l.dataProposta)+' dias</span><span style="color:var(--muted);font-size:12px">proposta em '+l.dataProposta+'</span>'+(l.whatsapp?'<a style="margin-left:auto;font-size:12px;font-weight:700;color:var(--accent-2)" href="https://wa.me/'+l.whatsapp+'" target="_blank">chamar no WhatsApp →</a>':'')+'</div>'}).join(''):'<div class="vazio">Nenhum follow-up pendente. 👌</div>')+'</div>';
+ html+='<div class="painel funil"><h2>'+T('Funil do pipeline')+'</h2>'+ORDEM.map(function(s){var n=ls.filter(function(l){return l.status===s}).length;return '<div class="linha"><span>'+T(NOMES[s])+'</span><div class="barra"><div class="fill" style="width:'+(n/max*100)+'%;background:'+CORES[s]+'"></div></div><b>'+n+'</b></div>'}).join('')+'</div>';
+ html+='<div class="painel"><h2>'+T('Follow-ups pendentes (4+ dias sem resposta)')+'</h2>'+(fu.length?fu.map(function(l){return '<div class="fup-item"><b>'+l.nome+tagPais(l)+'</b><span class="dias">'+dias(l.dataProposta)+' '+T('dias')+'</span><span style="color:var(--muted);font-size:12px">'+T('proposta em')+' '+l.dataProposta+'</span>'+(l.whatsapp?'<a style="margin-left:auto;font-size:12px;font-weight:700;color:var(--accent-2)" href="https://wa.me/'+l.whatsapp+'" target="_blank">'+T('chamar no WhatsApp →')+'</a>':'')+'</div>'}).join(''):'<div class="vazio">'+T('Nenhum follow-up pendente. 👌')+'</div>')+'</div>';
  return html}
 function vPipeline(){var por={};fil().forEach(function(l){(por[l.status]=por[l.status]||[]).push(l)});
- return '<p class="dica-drag">Arraste um card para mudar o status — os automáticos (redesenhado, publicado, proposta) o plugin move sozinho; use o arrasto principalmente para <b>Respondeu</b> e <b>Fechado</b>.</p><div class="board">'+ORDEM.concat(['descartado']).map(function(s){var arr=por[s]||[];return '<div class="col" data-st="'+s+'" ondragover="dragSobre(event)" ondragleave="dragSai(event)" ondrop="solta(event,\''+s+'\')"><h3>'+NOMES[s]+'<span>'+arr.length+'</span></h3><div class="cards">'+(arr.length?arr.map(card).join(''):'<div class="vazio">solte aqui</div>')+'</div></div>'}).join('')+'</div>'}
+ return '<p class="dica-drag">'+T('Arraste um card para mudar o status — os automáticos (redesenhado, publicado, proposta) o plugin move sozinho; use o arrasto principalmente para <b>Respondeu</b> e <b>Fechado</b>.')+'</p><div class="board">'+ORDEM.concat(['descartado']).map(function(s){var arr=por[s]||[];return '<div class="col" data-st="'+s+'" ondragover="dragSobre(event)" ondragleave="dragSai(event)" ondrop="solta(event,\''+s+'\')"><h3>'+T(NOMES[s])+'<span>'+arr.length+'</span></h3><div class="cards">'+(arr.length?arr.map(card).join(''):'<div class="vazio">'+T('solte aqui')+'</div>')+'</div></div>'}).join('')+'</div>'}
 function vClientes(){var ls=fil().slice().sort(function(a,b){var x=a[sortCol]||'',y=b[sortCol]||'';return(x<y?-1:x>y?1:0)*(sortAsc?1:-1)});
  var pp=pagSize();var total=ls.length,paginas=Math.max(1,Math.ceil(total/pp));if(pag>paginas)pag=paginas;
  var ini=(pag-1)*pp,fim=Math.min(ini+pp,total);ls=ls.slice(ini,fim);
- return '<div class="painel tab"><div class="twrap"><table><thead><tr>'+[['nome','Cliente'],['nota','Nota'],['avaliacoes','Aval.'],['cidade','Cidade'],['status','Status'],['valor','Valor'],['x','Contato / páginas']].map(function(c){return '<th onclick="ordenar(\''+c[0]+'\')">'+c[1]+(sortCol===c[0]?(sortAsc?' ↑':' ↓'):'')+'</th>'}).join('')+'</tr></thead><tbody>'+ls.map(function(l){return '<tr><td><b>'+(l.siteAntigo?'<a class="nm-link" href="'+l.siteAntigo+'" target="_blank" title="abrir o site atual do cliente">'+l.nome+' ↗</a>':l.nome)+'</b><div style="color:var(--muted);font-size:11.5px">'+(l.email||'sem e-mail')+'</div></td><td>'+(l.nota?'★ '+l.nota:'—')+'</td><td>'+(l.avaliacoes||'—')+'</td><td>'+(l.cidade||'—')+'</td><td>'+pillStatus(l.status)+'</td><td>'+(l.valor?'R$ '+l.valor.toLocaleString('pt-BR'):'—')+'</td><td>'+acoes(l)+'</td></tr>'}).join('')+'</tbody></table></div><div class="pagin"><span class="info">Mostrando '+(total?ini+1:0)+'–'+fim+' de '+total+' clientes</span><select onchange="mudaPorPag(this.value)"><option value="auto"'+(porPag==='auto'?' selected':'')+'>Auto ('+pp+' / página)</option>'+[10,25,50].map(function(n){return '<option value="'+n+'"'+(porPag===n?' selected':'')+'>'+n+' / página</option>'}).join('')+'</select><button onclick="irPag('+(pag-1)+')"'+(pag<=1?' disabled':'')+'>‹</button>'+Array.apply(null,{length:paginas}).map(function(_,i){return '<button class="'+(pag===i+1?'on':'')+'" onclick="irPag('+(i+1)+')">'+(i+1)+'</button>'}).join('')+'<button onclick="irPag('+(pag+1)+')"'+(pag>=paginas?' disabled':'')+'>›</button></div></div>'}
+ return '<div class="painel tab"><div class="twrap"><table><thead><tr>'+[['nome','Cliente'],['nota','Nota'],['avaliacoes','Aval.'],['cidade','Cidade'],['status','Status'],['valor','Valor'],['x','Contato / páginas']].map(function(c){return '<th onclick="ordenar(\''+c[0]+'\')">'+T(c[1])+(sortCol===c[0]?(sortAsc?' ↑':' ↓'):'')+'</th>'}).join('')+'</tr></thead><tbody>'+ls.map(function(l){return '<tr><td><b>'+(l.siteAntigo?'<a class="nm-link" href="'+l.siteAntigo+'" target="_blank" title="abrir o site atual do cliente">'+l.nome+' ↗</a>':l.nome)+'</b>'+tagPais(l)+'<div style="color:var(--muted);font-size:11.5px">'+(l.email||T('sem e-mail'))+'</div></td><td>'+(l.nota?'★ '+l.nota:'—')+'</td><td>'+(l.avaliacoes||'—')+'</td><td>'+(l.cidade||'—')+'</td><td>'+pillStatus(l.status)+'</td><td>'+(l.valor?fmtLead(l,'valor'):'—')+'</td><td>'+acoes(l)+'</td></tr>'}).join('')+'</tbody></table></div><div class="pagin"><span class="info">'+T('Mostrando')+' '+(total?ini+1:0)+'–'+fim+' '+T('de')+' '+total+' '+T('clientes')+'</span><select onchange="mudaPorPag(this.value)"><option value="auto"'+(porPag==='auto'?' selected':'')+'>Auto ('+pp+' '+T('/ página')+')</option>'+[10,25,50].map(function(n){return '<option value="'+n+'"'+(porPag===n?' selected':'')+'>'+n+' '+T('/ página')+'</option>'}).join('')+'</select><button onclick="irPag('+(pag-1)+')"'+(pag<=1?' disabled':'')+'>‹</button>'+Array.apply(null,{length:paginas}).map(function(_,i){return '<button class="'+(pag===i+1?'on':'')+'" onclick="irPag('+(i+1)+')">'+(i+1)+'</button>'}).join('')+'<button onclick="irPag('+(pag+1)+')"'+(pag>=paginas?' disabled':'')+'>›</button></div></div>'}
 function irPag(n){pag=n;render()}
 function mudaPorPag(v){porPag=v==='auto'?'auto':parseInt(v);pag=1;render()}
 function vSites(){var ls=fil().filter(function(l){return['redesenhado','publicado','proposta','respondeu','fechado'].indexOf(l.status)>=0});
  return ls.length?'<div class="sites-grid">'+ls.map(function(l){
   var pg='sites/'+l.slug+'/'+l.slug+'.html';
-  var prim=l.urlNova?'<a class="prim" href="'+l.urlNova+'" target="_blank">Ver no ar ↗</a>':'<a class="prim" href="'+pg+'" target="_blank">Ver página</a>';
+  var prim=l.urlNova?'<a class="prim" href="'+l.urlNova+'" target="_blank">'+T('Ver no ar ↗')+'</a>':'<a class="prim" href="'+pg+'" target="_blank">'+T('Ver página')+'</a>';
   var ic=[];
-  if(l.siteAntigo)ic.push('<a href="'+l.siteAntigo+'" target="_blank" title="site antigo do cliente">antigo</a>');
-  if(l.urlNova)ic.push('<a href="'+pg+'" target="_blank" title="versão local">local</a>');
+  if(l.siteAntigo)ic.push('<a href="'+l.siteAntigo+'" target="_blank" title="site antigo do cliente">'+T('antigo')+'</a>');
+  if(l.urlNova)ic.push('<a href="'+pg+'" target="_blank" title="versão local">'+T('local')+'</a>');
   if(l.whatsapp)ic.push('<a href="https://wa.me/'+l.whatsapp+'" target="_blank">whatsapp</a>');
-  if(l.email&&l.email.indexOf('@')>0)ic.push('<a href="mailto:'+l.email+'">e-mail</a>');
-  ic.push('<a href="#" onclick="abrirEdit(\''+l.slug+'\');return false">✎ dados</a>');
+  if(l.email&&l.email.indexOf('@')>0)ic.push('<a href="mailto:'+l.email+'">'+T('e-mail')+'</a>');
+  ic.push('<a href="#" onclick="abrirEdit(\''+l.slug+'\');return false">'+T('✎ dados')+'</a>');
   ic.push('<a href="#" class="del" onclick="deletar(\''+l.slug+'\');return false">✕</a>');
-  return '<div class="site-card"><div class="prev"><iframe src="'+pg+'" loading="lazy"></iframe></div><div class="info"><div class="s-head"><span class="s-nm">'+l.nome+'</span>'+pillStatus(l.status)+'</div><div class="s-sub">'+[l.nicho,l.cidade,(l.nota?'★ '+l.nota+' ('+l.avaliacoes+')':null)].filter(Boolean).join(' · ')+'</div><div class="s-main">'+prim+'<a class="sec" href="sites/'+l.slug+'/'+l.slug+'-editor.html" target="_blank">Editar site</a></div><div class="s-icons">'+ic.join('')+'</div></div></div>'
- }).join('')+'</div>':'<div class="painel vazio">Nenhum site redesenhado ainda — rode /redesenhar.</div>'}
+  return '<div class="site-card"><div class="prev"><iframe src="'+pg+'" loading="lazy"></iframe></div><div class="info"><div class="s-head"><span class="s-nm">'+l.nome+'</span>'+tagPais(l)+pillStatus(l.status)+'</div><div class="s-sub">'+[l.nicho,l.cidade,(l.nota?'★ '+l.nota+' ('+l.avaliacoes+')':null)].filter(Boolean).join(' · ')+'</div><div class="s-main">'+prim+'<a class="sec" href="sites/'+l.slug+'/'+l.slug+'-editor.html" target="_blank">'+T('Editar site')+'</a></div><div class="s-icons">'+ic.join('')+'</div></div></div>'
+ }).join('')+'</div>':'<div class="painel vazio">'+T('Nenhum site redesenhado ainda — rode /redesenhar.')+'</div>'}
 function vFollowup(){var fu=fil().filter(function(l){return l.status==='proposta'&&dias(l.dataProposta)>=4});
- return '<div class="painel"><h2>Propostas aguardando follow-up</h2>'+(fu.length?fu.map(card).join(''):'<div class="vazio">Nenhum follow-up pendente.</div>')+'</div>'}
+ return '<div class="painel"><h2>'+T('Propostas aguardando follow-up')+'</h2>'+(fu.length?fu.map(card).join(''):'<div class="vazio">'+T('Nenhum follow-up pendente.')+'</div>')+'</div>'}
 function abrirContrato(slug,nome){document.getElementById('doc-titulo').textContent='Contrato — '+nome;document.getElementById('doc-frame').src='sites/'+slug+'/contrato-'+slug+'.html';document.getElementById('doc-bg').classList.add('aberto')}
 function fecharDoc(){document.getElementById('doc-bg').classList.remove('aberto');document.getElementById('doc-frame').src='about:blank'}
 function printDoc(){var f=document.getElementById('doc-frame');try{f.contentWindow.focus();f.contentWindow.print()}catch(e){window.open(f.src,'_blank');alert('Abri o contrato em nova aba — use Ctrl+P para imprimir/salvar PDF.')}}
-function pillCt(st){st=st||'pendente';return '<span class="pill ct-'+st+'">'+st.charAt(0).toUpperCase()+st.slice(1)+'</span>'}
+function pillCt(st){st=st||'pendente';return '<span class="pill ct-'+st+'">'+T(st.charAt(0).toUpperCase()+st.slice(1))+'</span>'}
 function vContratos(){var ls=fil().filter(function(l){return l.status==='fechado'});
- if(!ls.length)return '<div class="painel vazio">Nenhum cliente fechado ainda. Quando fechar, arraste o card pra "Fechado" e peça ao Claude: /contrato [cliente].</div>';
- return '<div class="painel" style="overflow-x:auto"><table><thead><tr><th>Cliente</th><th>Valor</th><th>Manutenção</th><th>Contrato</th><th>Data</th><th>Pago</th><th>Ações</th></tr></thead><tbody>'+ls.map(function(l){
+ if(!ls.length)return '<div class="painel vazio">'+T('Nenhum cliente fechado ainda. Quando fechar, arraste o card pra "Fechado" e peça ao Claude: /contrato [cliente].')+'</div>';
+ return '<div class="painel" style="overflow-x:auto"><table><thead><tr><th>'+T('Cliente')+'</th><th>'+T('Valor')+'</th><th>'+T('Manutenção')+'</th><th>'+T('Contrato')+'</th><th>'+T('Data')+'</th><th>'+T('Pago')+'</th><th>'+T('Ações')+'</th></tr></thead><tbody>'+ls.map(function(l){
   var doc='sites/'+l.slug+'/contrato-'+l.slug+'.html';
-  var acao=(l.contratoStatus&&l.contratoStatus!=='pendente')?'<a href="#" class="btn-ct ver" onclick="abrirContrato(\''+l.slug+'\',\''+l.nome.replace(/'/g,'')+'\');return false" title="abrir a folha do contrato aqui no painel">👁 Ver contrato</a><a href="sites/'+l.slug+'/contrato-'+l.slug+'.docx" download class="btn-ct baixar" title="baixa o Word travado que vai pro cliente">⬇ Baixar .docx</a>'+(l.contratoStatus==='assinado'?'<a href="sites/'+l.slug+'/contrato-'+l.slug+'-assinado.docx" download class="btn-ct ass">✓ Assinado</a>':'')+'':'<span style="color:var(--muted);font-size:12px">peça /contrato ao Claude</span>';
-  return '<tr><td><b>'+l.nome+'</b></td><td>'+(l.valor?'R$ '+l.valor.toLocaleString('pt-BR'):'—')+'</td><td>'+(l.manutencao?'R$ '+l.manutencao.toLocaleString('pt-BR')+'/mês':'—')+'</td><td><select class="mini" onchange="salvarOv(\''+l.slug+'\',{contratoStatus:this.value})">'+['pendente','enviado','assinado'].map(function(cs){return '<option value="'+cs+'"'+((l.contratoStatus||'pendente')===cs?' selected':'')+'>'+cs+'</option>'}).join('')+'</select></td><td>'+(l.contratoEm||'—')+'</td><td><input type="checkbox" class="fin-check" '+(l.pago?'checked':'')+' onchange="salvarOv(\''+l.slug+'\',{pago:this.checked?1:0})"></td><td>'+acao+'</td></tr>'
+  var acao=(l.contratoStatus&&l.contratoStatus!=='pendente')?'<a href="#" class="btn-ct ver" onclick="abrirContrato(\''+l.slug+'\',\''+l.nome.replace(/'/g,'')+'\');return false" title="abrir a folha do contrato aqui no painel">'+T('👁 Ver contrato')+'</a><a href="sites/'+l.slug+'/contrato-'+l.slug+'.docx" download class="btn-ct baixar" title="baixa o Word travado que vai pro cliente">'+T('⬇ Baixar .docx')+'</a>'+(l.contratoStatus==='assinado'?'<a href="sites/'+l.slug+'/contrato-'+l.slug+'-assinado.docx" download class="btn-ct ass">'+T('✓ Assinado')+'</a>':'')+'':'<span style="color:var(--muted);font-size:12px">'+T('peça /contrato ao Claude')+'</span>';
+  return '<tr><td><b>'+l.nome+'</b>'+tagPais(l)+'</td><td>'+(l.valor?fmtLead(l,'valor'):'—')+'</td><td>'+(l.manutencao?fmtLead(l,'manutencao')+'/'+T('mês'):'—')+'</td><td><select class="mini" onchange="salvarOv(\''+l.slug+'\',{contratoStatus:this.value})">'+['pendente','enviado','assinado'].map(function(cs){return '<option value="'+cs+'"'+((l.contratoStatus||'pendente')===cs?' selected':'')+'>'+T(cs)+'</option>'}).join('')+'</select></td><td>'+(l.contratoEm||'—')+'</td><td><input type="checkbox" class="fin-check" '+(l.pago?'checked':'')+' onchange="salvarOv(\''+l.slug+'\',{pago:this.checked?1:0})"></td><td>'+acao+'</td></tr>'
  }).join('')+'</tbody></table></div>'}
 function vFinanceiro(){var ls=fil().filter(function(l){return l.status==='fechado'});
- var recebido=ls.filter(function(l){return l.pago}).reduce(function(a,l){return a+(l.valor||0)},0);
- var areceber=ls.filter(function(l){return !l.pago}).reduce(function(a,l){return a+(l.valor||0)},0);
- var mrr=ls.reduce(function(a,l){return a+(l.manutencao||0)},0);
- var fmt=function(n){return 'R$ '+n.toLocaleString('pt-BR')};
- var html='<div class="stats">'+[['Recebido',fmt(recebido),'verde'],['A receber',fmt(areceber),'ambar'],['Manutenções (MRR)',fmt(mrr)+'/mês','laranja'],['Projeção 12 meses',fmt(recebido+areceber+mrr*12),'verde']].map(function(x){return '<div class="stat '+x[2]+'"><div class="n">'+x[1]+'</div><div class="l">'+x[0]+'</div></div>'}).join('')+'</div>';
- html+='<div class="painel" style="overflow-x:auto"><h2>Fechamentos</h2>'+(ls.length?'<table><thead><tr><th>Cliente</th><th>Valor</th><th>Pago</th><th>Manutenção/mês</th><th>Contrato</th></tr></thead><tbody>'+ls.map(function(l){return '<tr><td><b>'+l.nome+'</b></td><td>'+(l.valor?fmt(l.valor):'—')+'</td><td><input type="checkbox" class="fin-check" '+(l.pago?'checked':'')+' onchange="salvarOv(\''+l.slug+'\',{pago:this.checked?1:0})"></td><td>'+(l.manutencao?fmt(l.manutencao):'—')+'</td><td>'+pillCt(l.contratoStatus)+'</td></tr>'}).join('')+'</tbody></table>':'<div class="vazio">Sem fechamentos ainda — a projeção começa no primeiro card arrastado pra Fechado.</div>')+'</div>';
- html+='<div class="painel"><h2>Como o financeiro se alimenta</h2><p style="font-size:13px;color:var(--muted);margin:0">Valor e manutenção entram quando você fecha (drag no kanban ou ✎ dados). "Pago" você marca aqui com um clique. O contrato muda pra "enviado" quando o Claude gera via /contrato — e pra "assinado" quando você marcar.</p></div>';
+ var recebido=somaMoe(ls.filter(function(l){return l.pago}),'valor');
+ var areceber=somaMoe(ls.filter(function(l){return !l.pago}),'valor');
+ var mrr=somaMoe(ls,'manutencao');
+ var proj={BR:recebido.BR+areceber.BR+mrr.BR*12,US:recebido.US+areceber.US+mrr.US*12};
+ var html='<div class="stats">'+[['Recebido',statMoe(recebido),'verde'],['A receber',statMoe(areceber),'ambar'],['Manutenções (MRR)',statMoe(mrr,'/'+T('mês')),'laranja'],['Projeção 12 meses',statMoe(proj),'verde']].map(function(x){return '<div class="stat '+x[2]+'"><div class="n'+(String(x[1]).indexOf('<br>')>=0?' duplo':'')+'">'+x[1]+'</div><div class="l">'+T(x[0])+'</div></div>'}).join('')+'</div>';
+ html+='<div class="painel" style="overflow-x:auto"><h2>'+T('Fechamentos')+'</h2>'+(ls.length?'<table><thead><tr><th>'+T('Cliente')+'</th><th>'+T('Valor')+'</th><th>'+T('Pago')+'</th><th>'+T('Manutenção/mês')+'</th><th>'+T('Contrato')+'</th></tr></thead><tbody>'+ls.map(function(l){return '<tr><td><b>'+l.nome+'</b>'+tagPais(l)+'</td><td>'+(l.valor?fmtLead(l,'valor'):'—')+'</td><td><input type="checkbox" class="fin-check" '+(l.pago?'checked':'')+' onchange="salvarOv(\''+l.slug+'\',{pago:this.checked?1:0})"></td><td>'+(l.manutencao?fmtLead(l,'manutencao'):'—')+'</td><td>'+pillCt(l.contratoStatus)+'</td></tr>'}).join('')+'</tbody></table>':'<div class="vazio">'+T('Sem fechamentos ainda — a projeção começa no primeiro card arrastado pra Fechado.')+'</div>')+'</div>';
+ html+='<div class="painel"><h2>'+T('Como o financeiro se alimenta')+'</h2><p style="font-size:13px;color:var(--muted);margin:0">'+T('Valor e manutenção entram quando você fecha (drag no kanban ou ✎ dados). "Pago" você marca aqui com um clique. O contrato muda pra "enviado" quando o Claude gera via /contrato — e pra "assinado" quando você marcar.')+'</p></div>';
  return html}
 var CFG_CAMPOS=[['nome','Nome completo / razão social'],['cpfCnpj','CPF ou CNPJ'],['endereco','Endereço (rua, nº, bairro)'],['cidadeUf','Cidade/UF'],['email','E-mail'],['whatsapp','WhatsApp (55DDDnúmero)']];
 function vConfig(){
@@ -350,16 +414,15 @@ function salvarHG(){var body={};['usuario','dominio','servidor','pastaBase','sen
 function ordenar(c){if(c==='x')return;if(sortCol===c)sortAsc=!sortAsc;else{sortCol=c;sortAsc=true}pag=1;render()}
 var cmpSel=null;var HG={};
 function vComparador(){var ls=fil().filter(function(l){return l.slug&&['redesenhado','publicado','proposta','respondeu','fechado'].indexOf(l.status)>=0});
- if(!ls.length)return '<div class="painel"><div class="vazio">Sem sites redesenhados ainda — rode /redesenhar no Claude e o antes/depois aparece aqui.</div></div>';
+ if(!ls.length)return '<div class="painel"><div class="vazio">'+T('Sem sites redesenhados ainda — rode /redesenhar no Claude e o antes/depois aparece aqui.')+'</div></div>';
  if(!cmpSel||!ls.some(function(l){return l.slug===cmpSel}))cmpSel=ls[0].slug;
  var l=ls.filter(function(x){return x.slug===cmpSel})[0];
  var antiga=l.siteAntigo?((l.siteAntigo.indexOf('http')===0?l.siteAntigo:'https://'+l.siteAntigo)):null;
  var nova='sites/'+l.slug+'/'+l.slug+'.html';
  return '<div class="cmp-tabs">'+ls.map(function(x){return '<button class="'+(x.slug===cmpSel?'on':'')+'" onclick="cmpSel=\''+x.slug+'\';render()">'+x.nome+'</button>'}).join('')+'</div>'
- +'<div class="cmp-grid"><div class="cmp-col"><div class="cab antes">Antes — site atual'+(antiga?' · <a href="'+antiga+'" target="_blank" style="color:inherit">abrir ↗</a>':'')+'</div>'+(antiga?'<iframe src="'+antiga+'" loading="lazy"></iframe>':'<div class="vazio" style="padding:30px">Sem URL do site antigo registrada.</div>')+'</div>'
- +'<div class="cmp-col"><div class="cab depois">Depois — nova versão · <a href="'+nova+'" target="_blank" style="color:inherit">abrir ↗</a></div><iframe src="'+nova+'"></iframe></div></div>'
- +'<div style="font-size:11.5px;color:var(--muted);margin-top:8px">Alguns sites antigos bloqueiam visualização embutida — se o lado "Antes" ficar em branco, use o link "abrir ↗".</div>'}
-var cobPais='todos';
+ +'<div class="cmp-grid"><div class="cmp-col"><div class="cab antes">'+T('Antes — site atual')+(antiga?' · <a href="'+antiga+'" target="_blank" style="color:inherit">'+T('abrir ↗')+'</a>':'')+'</div>'+(antiga?'<iframe src="'+antiga+'" loading="lazy"></iframe>':'<div class="vazio" style="padding:30px">'+T('Sem URL do site antigo registrada.')+'</div>')+'</div>'
+ +'<div class="cmp-col"><div class="cab depois">'+T('Depois — nova versão')+' · <a href="'+nova+'" target="_blank" style="color:inherit">'+T('abrir ↗')+'</a></div><iframe src="'+nova+'"></iframe></div></div>'
+ +'<div style="font-size:11.5px;color:var(--muted);margin-top:8px">'+T('Alguns sites antigos bloqueiam visualização embutida — se o lado "Antes" ficar em branco, use o link "abrir ↗".')+'</div>'}
 var COB_CAMPOS=['cidade','estado','pais','nicho','rodadaEm','avaliados','qualificados','descartados','obs'];
 function chaveCob(r){return ((r.cidade||'')+'|'+(r.estado||'')+'|'+(r.nicho||'')).toLowerCase()}
 function gravaCobLocal(){localStorage.setItem('prospector_cob',JSON.stringify(cob));render()}
@@ -374,13 +437,13 @@ function registrarCob(){
  var r={};COB_CAMPOS.forEach(function(k){var el=document.getElementById('cob-'+k);if(el)r[k]=el.value});
  if(!r.cidade||!r.nicho){alert('Cidade e nicho são obrigatórios.');return}
  ['avaliados','qualificados','descartados'].forEach(function(k){r[k]=parseInt(r[k])||0});
- r.pais=r.pais||'BR';r.rodadaEm=r.rodadaEm||new Date().toISOString().slice(0,10);
+ r.pais=r.pais||(PAIS!=='todos'?PAIS:'BR');r.rodadaEm=r.rodadaEm||new Date().toISOString().slice(0,10);
  if(MODE==='db'){fetch('/api/cobertura',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)}).then(recarregaCob);return}
  var ja=cob.filter(function(x){return chaveCob(x)===chaveCob(r)})[0];
  if(ja){['avaliados','qualificados','descartados'].forEach(function(k){ja[k]=(parseInt(ja[k])||0)+r[k]});ja.rodadaEm=r.rodadaEm;if(r.obs)ja.obs=r.obs}
  else{r.id=cob.reduce(function(a,x){return Math.max(a,x.id||0)},0)+1;cob=cob.concat([r])}
  gravaCobLocal()}
-function cobFil(){return cob.filter(function(r){return cobPais==='todos'||(r.pais||'BR')===cobPais})}
+function cobFil(){return cob.filter(function(r){return PAIS==='todos'||(r.pais||'BR')===PAIS})}
 function vCobertura(){
  var rs=cobFil();
  var cidades=[],nichos=[],porChave={};
@@ -393,28 +456,28 @@ function vCobertura(){
  var aval=rs.reduce(function(a,r){return a+(parseInt(r.avaliados)||0)},0);
  var qual=rs.reduce(function(a,r){return a+(parseInt(r.qualificados)||0)},0);
  var taxa=aval?Math.round(qual/aval*100):0;
- var html='<div class="stats">'+[['Cidades trabalhadas',cidades.length,''],['Nichos atacados',nichos.length,''],['Combinações cobertas',rs.length+' de '+(cidades.length*nichos.length||0),'laranja'],['Taxa de qualificação',taxa+'%','verde']].map(function(s){return '<div class="stat '+s[2]+'"><div class="n">'+s[1]+'</div><div class="l">'+s[0]+'</div></div>'}).join('')+'</div>';
- html+='<div class="painel"><h2>Matriz cidade × nicho <span style="float:right;font-family:var(--sans);font-size:12px;font-weight:600;color:var(--muted)">País: '+['todos','BR','US'].map(function(p){return '<a href="#" onclick="cobPais=\''+p+'\';render();return false" style="margin-left:8px;text-decoration:none;font-weight:'+(cobPais===p?'800':'600')+';color:'+(cobPais===p?'var(--accent-2)':'var(--muted)')+'">'+p+'</a>'}).join('')+'</span></h2>';
- if(!rs.length)html+='<div class="vazio">Nenhuma rodada registrada ainda — o /prospectar registra sozinho ao fim de cada varredura, ou use o formulário abaixo.</div>';
+ var html='<div class="stats">'+[['Cidades trabalhadas',cidades.length,''],['Nichos atacados',nichos.length,''],['Combinações cobertas',rs.length+' '+T('de')+' '+(cidades.length*nichos.length||0),'laranja'],['Taxa de qualificação',taxa+'%','verde']].map(function(s){return '<div class="stat '+s[2]+'"><div class="n">'+s[1]+'</div><div class="l">'+T(s[0])+'</div></div>'}).join('')+'</div>';
+ html+='<div class="painel"><h2>'+T('Matriz cidade × nicho')+(PAIS!=='todos'?' <span style="font-family:var(--sans);font-size:12px;font-weight:700;color:'+(PAIS==='US'?'#4A6591':'var(--ok)')+'">'+(PAIS==='US'?'🇺🇸 US':'🇧🇷 BR')+'</span>':'')+'</h2>';
+ if(!rs.length)html+='<div class="vazio">'+T('Nenhuma rodada registrada ainda — o /prospectar registra sozinho ao fim de cada varredura, ou use o formulário abaixo.')+'</div>';
  else{
   html+='<div class="cob-wrap"><table class="cob-matriz"><thead><tr><th></th>'+nichos.map(function(n){return '<th>'+n+'</th>'}).join('')+'</tr></thead><tbody>'+cidades.map(function(cid){
    var p=cid.split(' / ');
    return '<tr><th class="cid">'+p[0]+(p[1]?'<span>'+p[1]+'</span>':'')+'</th>'+nichos.map(function(n){
     var r=porChave[(cid+'|'+n).toLowerCase()];
-    return '<td>'+(r?'<span class="cel on" title="'+(r.rodadaEm||'sem data')+' · '+(r.qualificados||0)+' qualificados de '+(r.avaliados||0)+' avaliados">'+(r.rodadaEm||'✓')+'<br>'+(r.qualificados||0)+' leads</span>':'<span class="cel off" title="campo aberto — ainda não prospectado">livre</span>')+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table></div>';
-  html+='<div style="font-size:11.5px;color:var(--muted);margin-top:10px">Célula verde = já prospectado (data + leads qualificados). Célula cinza = campo aberto.</div>'}
+    return '<td>'+(r?'<span class="cel on" title="'+(r.rodadaEm||T('sem data'))+' · '+(r.qualificados||0)+' '+T('qualificados de')+' '+(r.avaliados||0)+' '+T('avaliados')+'">'+(r.rodadaEm||'✓')+'<br>'+(r.qualificados||0)+' '+T('leads')+'</span>':'<span class="cel off" title="'+T('campo aberto — ainda não prospectado')+'">'+T('livre')+'</span>')+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table></div>';
+  html+='<div style="font-size:11.5px;color:var(--muted);margin-top:10px">'+T('Célula verde = já prospectado (data + leads qualificados). Célula cinza = campo aberto.')+'</div>'}
  html+='</div>';
- html+='<div class="painel"><h2>Registrar rodada</h2><div class="cob-form">'+
+ html+='<div class="painel"><h2>'+T('Registrar rodada')+'</h2><div class="cob-form">'+
   [['cidade','Cidade','text'],['estado','Estado/UF','text'],['nicho','Nicho','text'],['rodadaEm','Data da rodada','date'],['avaliados','Avaliados','number'],['qualificados','Qualificados','number'],['descartados','Descartados','number'],['obs','Observações','text']].map(function(c){
-   return '<div><label>'+c[1]+'</label><input id="cob-'+c[0]+'" type="'+c[2]+'"></div>'}).join('')+
-  '<div><label>País</label><select id="cob-pais"><option value="BR">BR</option><option value="US">US</option></select></div>'+
-  '<div><button onclick="registrarCob()">Registrar</button></div></div>'+
-  '<div style="font-size:11.5px;color:var(--muted);margin-top:10px">Registrar a mesma cidade+estado+nicho de novo soma nos contadores e atualiza a data — nunca duplica a linha.</div></div>';
- html+='<div class="painel" style="overflow-x:auto"><h2>Rodadas registradas</h2>'+(rs.length?'<table><thead><tr><th>Cidade</th><th>UF</th><th>País</th><th>Nicho</th><th>Rodada em</th><th>Aval.</th><th>Qual.</th><th>Desc.</th><th>Taxa</th><th>Obs</th><th></th></tr></thead><tbody>'+rs.map(function(r){
+   return '<div><label>'+T(c[1])+'</label><input id="cob-'+c[0]+'" type="'+c[2]+'"></div>'}).join('')+
+  '<div><label>'+T('País')+'</label><select id="cob-pais"><option value="BR"'+(PAIS==='BR'?' selected':'')+'>BR</option><option value="US"'+(PAIS==='US'?' selected':'')+'>US</option></select></div>'+
+  '<div><button onclick="registrarCob()">'+T('Registrar')+'</button></div></div>'+
+  '<div style="font-size:11.5px;color:var(--muted);margin-top:10px">'+T('Registrar a mesma cidade+estado+nicho de novo soma nos contadores e atualiza a data — nunca duplica a linha.')+'</div></div>';
+ html+='<div class="painel" style="overflow-x:auto"><h2>'+T('Rodadas registradas')+'</h2>'+(rs.length?'<table><thead><tr><th>'+T('Cidade')+'</th><th>UF</th><th>'+T('País')+'</th><th>'+T('Nicho')+'</th><th>'+T('Rodada em')+'</th><th>'+T('Aval.')+'</th><th>'+T('Qual.')+'</th><th>'+T('Desc.')+'</th><th>'+T('Taxa')+'</th><th>'+T('Obs')+'</th><th></th></tr></thead><tbody>'+rs.map(function(r){
   var t=(parseInt(r.avaliados)||0)?Math.round((parseInt(r.qualificados)||0)/parseInt(r.avaliados)*100)+'%':'—';
   var inp=function(k,tipo,cls){return '<input class="cob-in '+(cls||'')+'" type="'+tipo+'" value="'+String(r[k]==null?'':r[k]).replace(/"/g,'&quot;')+'" onchange="salvarCob('+r.id+',{'+k+':this.value})">'};
   return '<tr><td>'+inp('cidade','text')+'</td><td>'+inp('estado','text','num')+'</td><td><select class="mini" onchange="salvarCob('+r.id+',{pais:this.value})">'+['BR','US'].map(function(p){return '<option value="'+p+'"'+((r.pais||'BR')===p?' selected':'')+'>'+p+'</option>'}).join('')+'</select></td><td>'+inp('nicho','text')+'</td><td>'+inp('rodadaEm','date')+'</td><td>'+inp('avaliados','number','num')+'</td><td>'+inp('qualificados','number','num')+'</td><td>'+inp('descartados','number','num')+'</td><td>'+t+'</td><td>'+inp('obs','text')+'</td><td><a href="#" class="del" style="color:#B0483B;font-size:11px;font-weight:700;text-decoration:none" onclick="deletarCob('+r.id+');return false">✕ excluir</a></td></tr>'
- }).join('')+'</tbody></table>':'<div class="vazio">Nenhuma rodada registrada para este país.</div>')+'</div>';
+ }).join('')+'</tbody></table>':'<div class="vazio">'+T('Nenhuma rodada registrada para este país.')+'</div>')+'</div>';
  return html}
 function render(){nav();document.getElementById('view').innerHTML={geral:vGeral,pipeline:vPipeline,clientes:vClientes,sites:vSites,comparador:vComparador,followup:vFollowup,cobertura:vCobertura,contratos:vContratos,financeiro:vFinanceiro,config:vConfig}[view]()}
 var dragSlug=null;
@@ -424,7 +487,7 @@ function dragSobre(e){e.preventDefault();e.dataTransfer.dropEffect='move';e.curr
 function dragSai(e){e.currentTarget.classList.remove('alvo')}
 function solta(e,st){e.preventDefault();e.currentTarget.classList.remove('alvo');if(!dragSlug)return;
  var ch={status:st};
- if(st==='fechado'){var v=prompt('Fechou! Valor cobrado (R$):','700');if(v!==null&&v!==''&&!isNaN(parseFloat(v)))ch.valor=parseFloat(v)}
+ if(st==='fechado'){var ld=leads.filter(function(l){return l.slug===dragSlug})[0]||{};var us=(ld.pais||'BR')==='US';var v=prompt(us?'Closed! Amount charged (US$):':'Fechou! Valor cobrado (R$):',us?'500':'700');if(v!==null&&v!==''&&!isNaN(parseFloat(v)))ch.valor=parseFloat(v)}
  if(st==='proposta'&&!leads.filter(function(l){return l.slug===dragSlug})[0].dataProposta)ch.dataProposta=new Date().toISOString().slice(0,10);
  salvarOv(dragSlug,ch);dragSlug=null}
 document.getElementById('busca').addEventListener('input',function(){busca=this.value;pag=1;render()});

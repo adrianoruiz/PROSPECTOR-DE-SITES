@@ -1,4 +1,4 @@
-# Prospector de Sites — v2.1.0
+# Prospector de Sites — v2.2.0
 
 Prospecção semi-automática de clientes com sites ruins: acha, redesenha, publica e oferta.
 
@@ -22,6 +22,15 @@ O pacote inclui `manual.html` — o manual completo do usuário, copiado pra pas
 
 O plugin mantém um painel de controle na sua pasta: `prospector.db` (banco SQLite) + `dashboard.html`. Duplo clique em `iniciar-dashboard.bat` (requer Python) abre o painel completo em http://localhost:8765 — kanban com drag & drop, edição, exclusão, funil, comparador antes/depois integrado, follow-ups, controle de contratos (pendente/enviado/assinado) e painel financeiro (recebido, a receber e MRR das manutenções), tudo salvo no banco.
 
+## Operação Brasil × Estados Unidos (novo na v2.2.0)
+
+O plugin agora separa a operação por país. Ao prospectar, cada lead recebe um campo `pais` (`BR` por padrão, `US` para cidade americana), gravado também na cobertura.
+
+- **Chave BR/US no dashboard** — um seletor global (todos / BR / US) filtra todas as abas de uma vez.
+- **Moedas nunca se misturam** — lead BR mostra valores em R$, lead US em US$; Financeiro e Visão geral somam cada moeda em separado.
+- **Painel em PT/EN** — toggle de idioma do dashboard entre português e inglês.
+- **Proposta e contrato em inglês para lead US** — o e-mail de proposta sai em inglês americano natural e o contrato é redigido em inglês, ambos com valores em dólar. Nos EUA o e-mail público é raro (negócios usam formulário/redes), então a prospecção capricha na busca de contato e anota o canal disponível.
+
 ## Requisitos
 
 - Extensão Claude in Chrome conectada (prospecção no Maps e fallback de deploy)
@@ -35,4 +44,4 @@ Tudo na pasta conectada: `prospector-config.json` (preferências e credenciais �
 
 ## Como atualizar
 
-No chat: `/plugin marketplace update arrecheneto-plugins` e reinicie o app (versão certa: 2.1.0). Da 2.1.0 em diante, atualiza sozinho.
+No chat: `/plugin marketplace update arrecheneto-plugins` e reinicie o app (versão certa: 2.2.0). Da 2.1.0 em diante, atualiza sozinho.

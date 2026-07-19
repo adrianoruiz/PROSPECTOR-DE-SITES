@@ -31,7 +31,7 @@
 <body>
 <div class="wrap">
   <h1>📘 Manual — Prospector de Sites</h1>
-  <div class="versao">Versão 2.1.0</div>
+  <div class="versao">Versão 2.2.0</div>
   <p>Este plugin acha clientes com sites ruins no Google Maps, refaz as páginas com padrão profissional, publica na sua hospedagem e envia a proposta — e você administra tudo num painel (CRM) que roda no seu computador, de graça.</p>
 
   <div class="toc">
@@ -41,7 +41,8 @@
     <a href="#ciclo">3. O ciclo completo</a> ·
     <a href="#publicacao">4. Publicação automática (sem login!)</a> ·
     <a href="#dashboard">5. O dashboard (CRM)</a> ·
-    <a href="#mac">6. E no Mac?</a> · <a href="#faq">7. Problemas comuns</a>
+    <a href="#paises">6. Brasil e Estados Unidos</a> ·
+    <a href="#mac">7. E no Mac?</a> · <a href="#faq">8. Problemas comuns</a>
   </div>
 
   <h2 id="requisitos">1. O que você precisa antes</h2>
@@ -100,10 +101,20 @@
     <li><b>Configurações</b> — seus dados de contratante + conexão HostGator com a senha (preencha uma vez; a senha nunca passa pelo chat).</li>
   </ul>
 
-  <h2 id="mac">6. E no Mac?</h2>
+  <h2 id="paises">6. Brasil e Estados Unidos (novo na v2.2.0)</h2>
+  <p>Agora dá pra trabalhar os dois países no mesmo painel, sem misturar. Quando você prospecta uma cidade dos EUA, o Claude marca cada lead como <b>US</b> (cidade brasileira fica como <b>BR</b>, o padrão) — e isso decide moeda e idioma daí pra frente.</p>
+  <ul>
+    <li><b>Chave BR/US no topo do dashboard</b> — escolha <i>todos</i>, <i>BR</i> ou <i>US</i> e todas as abas passam a mostrar só aquele país.</li>
+    <li><b>Moedas nunca se misturam</b> — lead brasileiro aparece em R$, lead americano em US$. As abas Financeiro e Visão geral somam cada moeda separada; não existe total "misturado".</li>
+    <li><b>Painel em português ou inglês</b> — um botão troca o idioma do dashboard entre PT e EN.</li>
+    <li><b>Proposta e contrato em inglês pro lead US</b> — o e-mail de proposta sai em inglês americano natural e o contrato é redigido em inglês, os dois com valores em dólar. Sua assinatura/dados de contratante continuam os mesmos.</li>
+  </ul>
+  <div class="box aviso">⚠️ Nos EUA quase ninguém publica e-mail — o normal é formulário de contato no site ou Instagram/Facebook. Na prospecção o Claude procura mais fundo e anota o melhor canal de cada lead americano; a abordagem se adapta a ele.</div>
+
+  <h2 id="mac">7. E no Mac?</h2>
   <p>Tudo funciona igual — só mudam os arquivos de clique duplo: <code>iniciar-dashboard.command</code> (painel), <code>publicar-agora.command</code> (publicação manual) e <code>instalar-publicador.command</code> (publicador automático via launchd, uma vez só). O /setup entrega os arquivos certos pro seu sistema.</p>
   <div class="box dica">💡 Na primeira abertura o macOS pode bloquear por segurança: clique com o botão direito no arquivo → <b>Abrir</b> → Abrir. Só na primeira vez. Python 3: se não tiver, <code>brew install python3</code> ou python.org.</div>
-  <h2 id="faq">7. Problemas comuns</h2>
+  <h2 id="faq">8. Problemas comuns</h2>
   <h3>O comparador não apareceu depois do /redesenhar</h3>
   <p>Peça: "gere o comparar.html e atualize o dashboard". A partir da v0.11.1 a entrega é travada e ele sempre vem — e também fica na aba <b>Comparador</b> do dashboard.</p>
   <h3>Pede login no cPanel toda hora</h3>

@@ -27,6 +27,10 @@ Script pronto: `references/gerar-docx.py` (requer `python-docx`). Recebe `dados.
 
 Assunto: `Contrato de prestação de serviço — nova página [Nome do negócio]`. Corpo (adaptar à voz do usuário): agradecer a confiança, resumir em 2 linhas o combinado (escopo + valor + prazo), pedir que leia a minuta anexa e responda com um "de acordo" (ou assine digitalmente, se o usuário usar alguma ferramenta), e fechar com a assinatura do config. Instruir o usuário a ANEXAR o PDF exportado antes de enviar.
 
+## Lead dos EUA (`pais='US'`)
+
+Lead com `pais='US'` recebe o contrato redigido em inglês e com valores em dólar (US$) — mesma estrutura e cláusulas, só o idioma e a moeda mudam. Os dados do prestador vêm do config (`contratante`). Lead BR continua em português e real. (Não é preciso reescrever o template aqui — só redija na língua/moeda do país do lead.)
+
 ## Limites
 
 - SEMPRE manter o aviso do rodapé: minuta base, recomenda-se revisão por advogado.
